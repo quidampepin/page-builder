@@ -38,13 +38,19 @@ type ContentBlockParam =
   | Anthropic.Messages.ToolResultBlockParam;
 
 export function createAnthropicClient(): LLMClient {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  // Trim the env var defensively. Vercel's env var inputs and many
+  // shells/IDEs silently append trailing newlines or whitespace when
+  // pasting; the SDK then sends the value as the Authorization header
+  // and Node rejects it with "is not a legal HTTP header value"
+  // because raw whitespace in headers is forbidden. Trimming here
+  // turns a confusing runtime crash into a clean request.
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
     throw new Error(
       "ANTHROPIC_API_KEY is not set. Copy .env.example → .env.local and add your key from https://console.anthropic.com/.",
     );
   }
-  const model = process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
+  const model = (process.env.ANTHROPIC_MODEL || DEFAULT_MODEL).trim();
   const client = new Anthropic({ apiKey });
 
   return {
