@@ -16,6 +16,12 @@ const CDN_BASE = "https://wet-boew.github.io/themes-dist/GCWeb";
 
 const ASSETS = {
   css: `${CDN_BASE}/GCWeb/css/theme.min.css`,
+  // Méli-mélo is the experimental GCWeb pattern set (conjunction "and/or"
+  // groups, numbered step lists, etc.). Loading it always so palette
+  // patterns that use those classes (cnjnctn-type-or, lst-stps, …) render
+  // correctly. Pages that don't use those patterns aren't affected — the
+  // CSS only adds rules scoped to its own class names.
+  meliMeloCss: `${CDN_BASE}/GCWeb/m%C3%A9li-m%C3%A9lo/2025-12-mille-iles.css`,
   wetJs: `${CDN_BASE}/wet-boew/js/wet-boew.min.js`,
   themeJs: `${CDN_BASE}/GCWeb/js/theme.min.js`,
   sigEn: `${CDN_BASE}/GCWeb/assets/sig-blk-en.svg`,
@@ -129,7 +135,8 @@ export function head(title: string, lang: Lang): string {
 <title>${escapeHtml(title)} - Canada.ca</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="${GOOGLE_FONTS}">
-<link rel="stylesheet" href="${ASSETS.css}">`;
+<link rel="stylesheet" href="${ASSETS.css}">
+<link rel="stylesheet" href="${ASSETS.meliMeloCss}">`;
 }
 
 export function header(lang: Lang): string {

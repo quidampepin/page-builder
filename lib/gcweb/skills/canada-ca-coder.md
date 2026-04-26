@@ -123,3 +123,115 @@ Always include `<caption>` for accessibility. Use `class="table table-bordered t
 - Don't write jQuery or custom JS for interactions WET already handles
 - Don't invent class names — use documented WET/GCWeb classes only
 - Don't alter the provided text content
+
+## Bands and full-width sections
+
+Canada.ca topic pages alternate full-width "bands" with normal-background sections to create visual rhythm. Bands are NOT achieved with a wrapper inside `.container` — they're sibling sections inside `<main>`, and each section places its own `<div class="container">` inside to centre the content. The `<section>` element itself spans the full viewport width.
+
+The two canonical band styles:
+
+```html
+<!-- Grey band (use for "well" content, FAQs, secondary services) -->
+<section class="well brdr-0 brdr-rds-0 no-box-shadow">
+  <div class="container mrgn-tp-md">
+    <h2 class="mrgn-tp-0">Section heading</h2>
+    <!-- content -->
+  </div>
+</section>
+
+<!-- Plain (white) band -->
+<div class="panel panel-body brdr-0 no-box-shadow">
+  <div class="container">
+    <h2 class="mrgn-tp-0">Section heading</h2>
+    <!-- content -->
+  </div>
+</div>
+```
+
+When generating a topic page, alternate `<section class="well brdr-0 brdr-rds-0 no-box-shadow">` and `<div class="panel panel-body brdr-0 no-box-shadow">` blocks as siblings inside `<main>`. Don't wrap them in an outer `.container` — that would prevent the band from spanning the viewport.
+
+### Most requested band
+
+A specialized band used near the top of topic pages to surface the most-trafficked links. The heading "Most requested" sits in a 2-column slot on the left, the link list fills 10 columns on the right.
+
+```html
+<section class="provisional gc-most-requested">
+  <div class="container">
+    <div class="row d-sm-flex flex-sm-wrap">
+      <div class="col-md-2 d-flex align-self-center">
+        <h2>Most requested</h2>
+      </div>
+      <div class="col-md-10 d-flex align-self-center">
+        <ul>
+          <li><a href="#">Link 1</a></li>
+          <li><a href="#">Link 2</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+```
+
+## Méli-mélo experimental patterns
+
+Two patterns rely on the méli-mélo CSS bundle (loaded by the shell). Use these classes verbatim — fallback styling without the méli-mélo CSS will look unstyled.
+
+### And/Or conjunction
+
+For "you must satisfy any of the following" or "you must satisfy all of the following" content. The `cnjnctn-type-or` class adds the visible "OR" separator between options; `cnjnctn-type-and` adds an "AND" separator. Each option is a `<li class="cnjnctn-col">` containing a heading and content.
+
+```html
+<ul class="cnjnctn-type-or">
+  <li class="cnjnctn-col">
+    <h4>Header A<span class="wb-inv">: Option 1 of 2</span></h4>
+    <p>Content for option A.</p>
+  </li>
+  <li class="cnjnctn-col">
+    <h4>Header B<span class="wb-inv">: Option 2 of 2</span></h4>
+    <p>Content for option B.</p>
+  </li>
+</ul>
+```
+
+The `<span class="wb-inv">: Option N of M</span>` markup gives screen-reader users explicit context about which conjunction option this is. Always include it.
+
+### Numbered steps (lst-stps)
+
+Sequential task instructions where each step links to a topic or task page. Use this instead of a generic `<ol>` when steps represent a user's journey through a process.
+
+```html
+<ol class="lst-stps">
+  <li>
+    <h4><a href="#">Topic or task hyperlink for step 1</a></h4>
+    <p>Use action verbs or short keywords summarizing what the user does at this step.</p>
+  </li>
+  <li>
+    <h4><a href="#">Topic or task hyperlink for step 2</a></h4>
+    <p>Use action verbs or short keywords summarizing what the user does at this step.</p>
+  </li>
+</ol>
+```
+
+The `<h4>` wrapping the link is intentional — méli-mélo styles the step number from the list's counter and uses the `<h4>` for the visible step title.
+
+## Form inputs (large radios / checkboxes)
+
+Always use the `gc-chckbxrdio` fieldset class with `<ul class="list-unstyled lst-spcd-2">` containing `<li class="radio">` or `<li class="checkbox">` items. The input precedes the label (no wrapping); pairing is done via `id` / `for`.
+
+```html
+<fieldset class="gc-chckbxrdio">
+  <legend>Question text</legend>
+  <ul class="list-unstyled lst-spcd-2">
+    <li class="radio">
+      <input type="radio" name="opt" id="opt-1">
+      <label for="opt-1">Option 1</label>
+    </li>
+    <li class="radio">
+      <input type="radio" name="opt" id="opt-2">
+      <label for="opt-2">Option 2</label>
+    </li>
+  </ul>
+</fieldset>
+```
+
+For checkboxes, use `<li class="checkbox">` and `type="checkbox"` (no `name` needed unless you're submitting a form).
