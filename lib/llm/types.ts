@@ -36,6 +36,17 @@ export interface GenerateHtmlOptions {
   currentHtml?: string;
   /** Prior turns so the LLM has conversational context. */
   history?: ChatTurn[];
+  /**
+   * Coarse hint about which API route is calling. The Anthropic adapter
+   * uses this to pick a model: "translate" → ANTHROPIC_TRANSLATE_MODEL
+   * (defaults to fast Haiku), anything else → ANTHROPIC_MODEL.
+   *
+   * The purpose split exists because translate is structure-preserving
+   * text swap that doesn't need a reasoning-heavy model, and translate
+   * is the route most likely to bump against Vercel's 60s timeout. Using
+   * a faster model just for translate is the cheapest fix.
+   */
+  purpose?: "chat" | "translate";
 }
 
 export interface ChatTurn {

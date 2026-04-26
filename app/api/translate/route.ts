@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
     const rawHtml = await client.generateHtml({
       systemPrompt,
       userMessage,
+      purpose: "translate",
     });
 
     const { breadcrumb, main } = extractContent(rawHtml);
@@ -181,6 +182,7 @@ Return ONLY the JSON object — no preamble, no postscript.`;
   const raw = await client.generateHtml({
     systemPrompt: systemPrompt + chunkInstructions,
     userMessage,
+    purpose: "translate",
   });
 
   const parsed = parseJsonLoose(raw);

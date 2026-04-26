@@ -18,6 +18,14 @@ import type {
 } from "./types";
 
 const DEFAULT_MODEL = "claude-sonnet-4-6";
+/**
+ * Default model for translate. Haiku is ~2-3× faster than Sonnet on output
+ * tokens and ~5× cheaper, with no real quality loss for structure-preserving
+ * text translation. Picked specifically so the translate route fits inside
+ * Vercel Hobby's 60s function timeout — full-page Sonnet translates can
+ * exceed that on longer pages.
+ */
+const DEFAULT_TRANSLATE_MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 8192;
 
 /**
@@ -50,7 +58,15 @@ export function createAnthropicClient(): LLMClient {
       "ANTHROPIC_API_KEY is not set. Copy .env.example → .env.local and add your key from https://console.anthropic.com/.",
     );
   }
-  const model = (process.env.ANTHROPIC_MODEL || DEFAULT_MODEL).trim();
+  // Per-purpose model selection. The same client gets reused across both
+  // routes (chat + translate); we pick the model per-call instead of per-
+  // client so a single createAnthropicClient() invocation is enough.
+  const chatModel = (process.env.ANTHROPIC_MODEL || DEFAULT_MODEL).trim();
+  const translateModel = (
+    process.env.ANTHROPIC_TRANSLATE_MODEL ||
+    process.env.ANTHROPIC_MODEL ||
+    DEFAULT_TRANSLATE_MODEL
+  ).trim();
   const client = new Anthropic({ apiKey });
 
   return {
@@ -59,7 +75,9 @@ export function createAnthropicClient(): LLMClient {
       userMessage,
       attachments = [],
       history = [],
+      purpose,
     }: GenerateHtmlOptions): Promise<string> {
+      const model = purpose === "translate" ? translateModel : chatModel;
       const messages: Anthropic.Messages.MessageParam[] = [];
 
       // Prior conversation turns (kept short by the caller — full transcript
