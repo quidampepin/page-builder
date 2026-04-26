@@ -20,6 +20,23 @@ import type {
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 const MAX_TOKENS = 8192;
 
+/**
+ * Local union for the multimodal user-content array.
+ *
+ * The SDK ≤ 0.31 exported `ContentBlockParam` as a
+ * convenience union; v0.32 removed it in favor of the individual
+ * `*Param` interfaces. We rebuild the same union here so callers
+ * (attachmentToBlocks, the userContent array) stay strongly typed
+ * across SDK bumps. Keep this list in sync with whatever block shapes
+ * we actually push — text + image today; tool blocks if we add tool
+ * use later.
+ */
+type ContentBlockParam =
+  | Anthropic.Messages.TextBlockParam
+  | Anthropic.Messages.ImageBlockParam
+  | Anthropic.Messages.ToolUseBlockParam
+  | Anthropic.Messages.ToolResultBlockParam;
+
 export function createAnthropicClient(): LLMClient {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -49,7 +66,7 @@ export function createAnthropicClient(): LLMClient {
       }
 
       // Build the latest user turn as a multimodal content array.
-      const userContent: Anthropic.Messages.ContentBlockParam[] = [];
+      const userContent: ContentBlockParam[] = [];
       for (const att of attachments) {
         userContent.push(...attachmentToBlocks(att));
       }
@@ -81,7 +98,7 @@ export function createAnthropicClient(): LLMClient {
 
 function attachmentToBlocks(
   att: Attachment,
-): Anthropic.Messages.ContentBlockParam[] {
+): ContentBlockParam[] {
   if (att.base64 && isSupportedImage(att.mimeType)) {
     return [
       {
