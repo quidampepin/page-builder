@@ -32,6 +32,10 @@ interface Props {
   /** Opens the component palette modal. The modal itself lives in the
    *  parent so it can access app state for insertions. */
   onOpenPalette: () => void;
+  /** Prompts for a Canada.ca URL and imports its content into the active slot. */
+  onImportUrl: () => void;
+  /** Seeds the active slot with a blank canonical scaffold (breadcrumb, h1, page details). */
+  onBlankScaffold: () => void;
   /** Called when the user clicks Save in the HTML editor. The parent runs
    *  the new content through extractContent() to validate, syncs the title
    *  from the new h1, and pushes an undo snapshot. */
@@ -56,6 +60,8 @@ export function PreviewPane({
   onUndo,
   onRedo,
   onOpenPalette,
+  onImportUrl,
+  onBlankScaffold,
   onUpdateContent,
 }: Props) {
   const [view, setView] = useState<View>("preview");
@@ -309,6 +315,24 @@ export function PreviewPane({
           className="rounded-md border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100"
         >
           + Component
+        </button>
+
+        <button
+          type="button"
+          onClick={onImportUrl}
+          title="Import a Canada.ca URL — fetches the page and loads its breadcrumb + main into the active slot"
+          className="rounded-md border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100"
+        >
+          Import URL
+        </button>
+
+        <button
+          type="button"
+          onClick={onBlankScaffold}
+          title="Replace content with a blank Canada.ca scaffold (breadcrumb, h1, page details)"
+          className="rounded-md border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100"
+        >
+          Blank
         </button>
 
         <div className="flex-1" />

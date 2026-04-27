@@ -213,9 +213,31 @@ Emit the full breadcrumb + \`<main>\` as normal — no EDITS block. Use this whe
 - More than ~30% of the page is changing.
 - The user asked for a tone/language rewrite ("rewrite in plain language",
   "make it sound more formal") — touches everything.
+- **The user asked for a redesign, restructuring, or visual rework.** Triggers
+  include: "redesign", "rework", "redo the layout", "restructure", "make it
+  bolder", "make it more dramatic", "different design", "new look",
+  "reorganize", "give it a fresh layout". These ALL imply you're going to
+  produce a new structure — your edit-op selectors would target the OLD
+  structure you're abandoning, and they'd all miss.
+- The user is changing the section structure: adding/removing/reordering H2
+  sections, swapping component types (e.g. "turn the alerts into doormats"),
+  or inserting top-level patterns that need to slot between existing sections
+  (e.g. "wrap each H2 in a band").
 
-When in doubt, prefer edit mode. A failed edit is cheap to recover from
-(the user retries); a rewritten page that lost copy silently is not.
+## Choosing between modes
+
+Default rule: **if you can describe the change as "swap this exact element
+for that"**, use edit mode. **If your mental model of the new page differs
+structurally from the current page**, use full mode.
+
+Concrete check: before emitting an EDITS block, ask yourself "do my selectors
+target elements that exist verbatim in the current HTML?" If you're inventing
+selectors for a NEW structure you're imagining, switch to full mode — those
+selectors will all miss.
+
+When genuinely uncertain on a narrow change, prefer edit mode (failed edits
+are cheap to recover from). On a sweeping or restructuring change, prefer
+full mode — a 422 with all-misses wastes a turn and frustrates the user.
 
 ${currentHtml ? `# Current page HTML (edit this)\n\n\`\`\`html\n${currentHtml}\n\`\`\`\n\n` : ""}# Primary reference: canada-ca-coder
 

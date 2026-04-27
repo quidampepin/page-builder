@@ -19,6 +19,7 @@ import {
   type TranslationSnapshot,
 } from "@/lib/gcweb/smart-translate";
 import { extractTitle } from "@/lib/gcweb/extract-title";
+import { blankScaffold } from "@/lib/gcweb/scaffold";
 
 const LS_KEY = "gc-page-builder:state:v3";
 const LS_HISTORY_KEY = "gc-page-builder:history:v3";
@@ -684,6 +685,79 @@ export default function Home() {
     setError(null);
   }
 
+  /**
+   * Import a Canada.ca URL into the active slot. Calls /api/import-url
+   * which fetches server-side (avoids CORS), strips noise, resolves
+   * relative URLs, and returns the breadcrumb + main. We feed it through
+   * the same updateContent path as a manual edit so the title gets
+   * synced from the new h1 and an undo snapshot is pushed.
+   */
+  async function importUrl() {
+    const url = prompt(
+      "Paste a Canada.ca URL to import (only canada.ca and wet-boew.github.io domains allowed):",
+    );
+    if (!url) return;
+    if (
+      activePage.content &&
+      !confirm(
+        "Importing will replace the current page content. Continue?",
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch("/api/import-url", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Import failed: ${res.status}`);
+      }
+      const data = (await res.json()) as {
+        title: string;
+        content: string;
+        sourceUrl?: string;
+      };
+      updateContent(data.content);
+      const importMsg: ChatMessage = {
+        role: "assistant",
+        content: `Imported page from ${data.sourceUrl ?? url}.`,
+        mode: "edit",
+        editsApplied: 1,
+      };
+      setState((s) => ({ ...s, messages: [...s.messages, importMsg] }));
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  /**
+   * Replace the active slot's content with a blank Canada.ca scaffold —
+   * canonical breadcrumb, h1, page-details footer. Useful as a starting
+   * point when the user wants to build from a known structure.
+   */
+  function startBlankScaffold() {
+    if (
+      activePage.content &&
+      !confirm(
+        "Replace current content with a blank Canada.ca scaffold? Current work will be lost (unless saved).",
+      )
+    ) {
+      return;
+    }
+    updateContent(blankScaffold(state.lang));
+    const msg: ChatMessage = {
+      role: "assistant",
+      content: "Started from a blank Canada.ca scaffold.",
+      mode: "edit",
+      editsApplied: 1,
+    };
+    setState((s) => ({ ...s, messages: [...s.messages, msg] }));
+  }
+
   return (
     <main className="flex h-screen w-screen">
       <div className="w-[400px] flex-shrink-0">
@@ -715,6 +789,8 @@ export default function Home() {
           onUndo={undo}
           onRedo={redo}
           onOpenPalette={() => setPaletteOpen(true)}
+          onImportUrl={importUrl}
+          onBlankScaffold={startBlankScaffold}
           onUpdateContent={updateContent}
         />
       </div>
