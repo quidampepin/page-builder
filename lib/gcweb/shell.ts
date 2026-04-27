@@ -136,7 +136,38 @@ export function head(title: string, lang: Lang): string {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="${GOOGLE_FONTS}">
 <link rel="stylesheet" href="${ASSETS.css}">
-<link rel="stylesheet" href="${ASSETS.meliMeloCss}">`;
+<link rel="stylesheet" href="${ASSETS.meliMeloCss}">
+<style>
+/*
+ * Bands escape-hatch.
+ *
+ * <main> in this app is rendered with class="container" (Bootstrap's
+ * max-width centred wrapper). That works for normal content, but it
+ * means full-width bands (<section class="well"> and the topic-page
+ * "most requested" pattern) can't reach the viewport edges — they're
+ * trapped inside the container's max-width.
+ *
+ * Real Canada.ca pages avoid this by NOT putting .container on <main>
+ * and putting .container on each section instead. Refactoring to that
+ * convention would require regenerating every saved page. Instead, we
+ * use negative margins to let bands break out of any .container parent
+ * and span the full viewport. The band's INNER .container (which we
+ * still emit) keeps the content centred — so the visible content
+ * column lines up with non-band sections above and below.
+ *
+ * Limited to direct children of main.container so we don't accidentally
+ * break .well usage elsewhere on the page.
+ */
+main.container > section.well,
+main.container > section.gc-most-requested,
+main.container > section.gc-band,
+main.container > div.well,
+main.container > div.gc-most-requested,
+main.container > div.gc-band {
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+</style>`;
 }
 
 export function header(lang: Lang): string {

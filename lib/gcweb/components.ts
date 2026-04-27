@@ -15,8 +15,9 @@
  * use experimental méli-mélo classes (cnjnctn-type-or, lst-stps). The
  * shell loads the méli-mélo CSS so these render correctly.
  *
- * Placeholder content is short and generic. The user fills in real copy
- * via chat or direct edit after insertion.
+ * Bands: marked with .gc-band (and usually .well too, for padding). The
+ * shell CSS rule on `main.container > .gc-band` makes them break out of
+ * the container and span the viewport via negative margins.
  */
 
 export type ComponentCategory =
@@ -70,11 +71,24 @@ export const COMPONENTS: PaletteComponent[] = [
     label: "Band",
     category: "Callouts",
     description:
-      "Full-width grey band. Sections are siblings inside <main>; each has its own .container.",
-    html: `<section class="well brdr-0 brdr-rds-0 no-box-shadow">
-  <div class="container mrgn-tp-md">
+      "Full-width grey band. The .gc-band marker keeps it full-width even if you ask to change its colour.",
+    html: `<section class="gc-band well brdr-0 brdr-rds-0 no-box-shadow mrgn-bttm-0">
+  <div class="container mrgn-tp-md mrgn-bttm-md">
     <h2 class="mrgn-tp-0">Section heading</h2>
-    <p>Band content. The 'well' class gives this section the grey background; the inner <code>.container</code> centres the content.</p>
+    <p>Band content. The 'well' class paints this section grey; '.gc-band' is the marker the shell's CSS uses to make it break out of <code>main.container</code> and span the viewport.</p>
+  </div>
+</section>`,
+  },
+  {
+    id: "band-light-blue",
+    label: "Band — light blue",
+    category: "Callouts",
+    description:
+      "Full-width light-blue band. Keeps .well for padding; inline background-color overrides .well's grey.",
+    html: `<section class="gc-band well brdr-0 brdr-rds-0 no-box-shadow mrgn-bttm-0" style="background-color: #d7e6f3;">
+  <div class="container mrgn-tp-md mrgn-bttm-md">
+    <h2 class="mrgn-tp-0">Section heading</h2>
+    <p>Light-blue band content. The '.well' class preserves vertical padding so margin-collapse from the inner container doesn't eat the band's height; the inline <code>background-color</code> overrides .well's default grey.</p>
   </div>
 </section>`,
   },
@@ -84,7 +98,7 @@ export const COMPONENTS: PaletteComponent[] = [
     category: "Callouts",
     description:
       "Topic-page Most-requested band — heading on the left, link list on the right.",
-    html: `<section class="provisional gc-most-requested">
+    html: `<section class="gc-band provisional gc-most-requested">
   <div class="container">
     <div class="row d-sm-flex flex-sm-wrap">
       <div class="col-md-2 d-flex align-self-center">
@@ -213,6 +227,30 @@ export const COMPONENTS: PaletteComponent[] = [
 </ol>`,
   },
   {
+    id: "well",
+    label: "Well (inline callout)",
+    category: "Content",
+    description: "Bootstrap well — inline grey callout box for asides. Not full-width.",
+    html: `<aside class="well">
+  <h2 class="mrgn-tp-0">Heading</h2>
+  <p>Well content. Used for small inline asides — definitions, tips, secondary info — that should stand out without becoming a full band.</p>
+</aside>`,
+  },
+  {
+    id: "panel",
+    label: "Panel",
+    category: "Content",
+    description: "Bootstrap panel — bordered box with optional heading and body.",
+    html: `<section class="panel panel-default">
+  <header class="panel-heading">
+    <h2 class="panel-title">Panel heading</h2>
+  </header>
+  <div class="panel-body">
+    <p>Panel body content. Use for grouped information that needs a clear visual frame, such as a summary box or sidebar block.</p>
+  </div>
+</section>`,
+  },
+  {
     id: "image",
     label: "Image",
     category: "Content",
@@ -327,6 +365,41 @@ export const COMPONENTS: PaletteComponent[] = [
     </li>
   </ul>
 </fieldset>`,
+  },
+  {
+    id: "field-flow",
+    label: "Field flow",
+    category: "Forms",
+    description:
+      "Multi-step task flow with numbered fieldsets — replace with your team's canonical markup if different.",
+    html: `<ol class="lst-num-spcd">
+  <li>
+    <fieldset class="gc-chckbxrdio">
+      <legend>Step 1 — Question or instruction</legend>
+      <ul class="list-unstyled lst-spcd-2">
+        <li class="radio">
+          <input type="radio" name="step1" id="step1-a">
+          <label for="step1-a">Option A</label>
+        </li>
+        <li class="radio">
+          <input type="radio" name="step1" id="step1-b">
+          <label for="step1-b">Option B</label>
+        </li>
+      </ul>
+    </fieldset>
+  </li>
+  <li>
+    <fieldset class="gc-chckbxrdio">
+      <legend>Step 2 — Question or instruction</legend>
+      <p>Step 2 content — could be another input group, a text field, or further instructions.</p>
+    </fieldset>
+  </li>
+  <li>
+    <p class="mrgn-tp-md">
+      <a href="#" class="btn btn-call-to-action">Continue</a>
+    </p>
+  </li>
+</ol>`,
   },
 ];
 

@@ -128,19 +128,35 @@ Always include `<caption>` for accessibility. Use `class="table table-bordered t
 
 Canada.ca topic pages alternate full-width "bands" with normal-background sections to create visual rhythm. Bands are NOT achieved with a wrapper inside `.container` — they're sibling sections inside `<main>`, and each section places its own `<div class="container">` inside to centre the content. The `<section>` element itself spans the full viewport width.
 
-The two canonical band styles:
+The shell renders `<main>` with `class="container"`, so direct children are normally constrained to the container's max width. To make a band span the viewport, the section needs ONE of these marker classes:
+
+- `.well` (built-in grey background — the most common band)
+- `.gc-most-requested` (the IRCC-style "Most requested" band)
+- `.gc-band` (generic marker for ANY full-width band — use this when picking a custom colour)
+
+The shell's CSS recognises those markers and applies negative margins to break them out of `main.container`. The band's INNER `<div class="container">` re-centres the content so it lines up with the rest of the page.
+
+The three canonical band styles:
 
 ```html
-<!-- Grey band (use for "well" content, FAQs, secondary services) -->
-<section class="well brdr-0 brdr-rds-0 no-box-shadow">
-  <div class="container mrgn-tp-md">
+<!-- Grey band (most common) -->
+<section class="gc-band well brdr-0 brdr-rds-0 no-box-shadow mrgn-bttm-0">
+  <div class="container mrgn-tp-md mrgn-bttm-md">
     <h2 class="mrgn-tp-0">Section heading</h2>
     <!-- content -->
   </div>
 </section>
 
-<!-- Plain (white) band -->
-<div class="panel panel-body brdr-0 no-box-shadow">
+<!-- Coloured band (light-blue, beige, whatever the brief asks for) -->
+<section class="gc-band brdr-0 brdr-rds-0 no-box-shadow mrgn-bttm-0" style="background-color: #d7e6f3;">
+  <div class="container mrgn-tp-md mrgn-bttm-md">
+    <h2 class="mrgn-tp-0">Section heading</h2>
+    <!-- content -->
+  </div>
+</section>
+
+<!-- Plain (white) band — uses .gc-band so it still spans full width -->
+<div class="gc-band panel panel-body brdr-0 no-box-shadow">
   <div class="container">
     <h2 class="mrgn-tp-0">Section heading</h2>
     <!-- content -->
@@ -148,7 +164,12 @@ The two canonical band styles:
 </div>
 ```
 
-When generating a topic page, alternate `<section class="well brdr-0 brdr-rds-0 no-box-shadow">` and `<div class="panel panel-body brdr-0 no-box-shadow">` blocks as siblings inside `<main>`. Don't wrap them in an outer `.container` — that would prevent the band from spanning the viewport.
+**Critical rule:** when changing a band's appearance via an edit op, NEVER drop the `.gc-band` (or `.well` / `.gc-most-requested`) marker — that's what makes the band full-width. To change a band's colour, swap the background but keep the marker. For example:
+
+- "make this band light-blue" → keep `.gc-band`, replace `.well` with an inline `style="background-color: ..."` or a colour utility class. The element remains a band.
+- "make this band white" → keep `.gc-band`, drop `.well`. The negative-margin escape still applies, the section renders white.
+
+Topic pages typically alternate banded and non-banded sections as siblings inside `<main>`. Each section provides its own internal `.container`.
 
 ### Most requested band
 

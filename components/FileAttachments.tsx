@@ -47,12 +47,12 @@ export function FileAttachments({ attachments, onAdd, onRemove, onError }: Props
   }
 
   return (
-    <div className="border-t border-neutral-200 bg-neutral-50 p-2">
+    <div className="border-t border-neutral-200 bg-neutral-50 px-3 py-2.5">
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="rounded border border-neutral-300 bg-white px-2 py-1 text-xs hover:bg-neutral-100"
+          className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 hover:text-neutral-900"
         >
           + Attach
         </button>
@@ -69,18 +69,18 @@ export function FileAttachments({ attachments, onAdd, onRemove, onError }: Props
         />
       </div>
       {attachments.length > 0 && (
-        <ul className="mt-2 flex flex-wrap gap-1">
+        <ul className="mt-2 flex flex-wrap gap-1.5">
           {attachments.map((att, i) => (
             <li
               key={i}
-              className="flex items-center gap-1 rounded bg-white px-2 py-0.5 text-xs shadow-sm"
+              className="flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs shadow-sm"
               title={att.mimeType}
             >
-              <span className="max-w-[160px] truncate">{att.filename}</span>
+              <span className="max-w-[180px] truncate text-neutral-700">{att.filename}</span>
               <button
                 type="button"
                 onClick={() => onRemove(i)}
-                className="text-neutral-400 hover:text-neutral-700"
+                className="text-neutral-400 transition hover:text-neutral-900"
                 aria-label={`Remove ${att.filename}`}
               >
                 ×

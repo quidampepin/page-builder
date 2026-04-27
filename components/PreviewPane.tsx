@@ -168,15 +168,15 @@ export function PreviewPane({
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center gap-2 border-b border-neutral-200 bg-white px-3 py-2">
-        <div className="flex rounded border border-neutral-300 overflow-hidden">
+      <header className="flex flex-wrap items-center gap-2 border-b border-neutral-200 bg-white px-4 py-2.5">
+        <div className="flex rounded-md border border-neutral-300 overflow-hidden">
           <button
             type="button"
             onClick={onUndo}
             disabled={!canUndo}
             title="Undo last change"
             aria-label="Undo"
-            className="px-2 py-1 text-xs hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent"
+            className="px-2 py-1 text-sm hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent"
           >
             ← Undo
           </button>
@@ -186,20 +186,20 @@ export function PreviewPane({
             disabled={!canRedo}
             title="Redo last undone change"
             aria-label="Redo"
-            className="border-l border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent"
+            className="border-l border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent"
           >
             Redo →
           </button>
         </div>
 
-        <div className="flex rounded border border-neutral-300 overflow-hidden">
+        <div className="flex rounded-md border border-neutral-300 overflow-hidden">
           <button
             type="button"
             onClick={() => switchView("preview")}
             className={
-              "px-3 py-1 text-xs " +
+              "px-3 py-1 text-sm " +
               (view === "preview"
-                ? "bg-neutral-900 text-white"
+                ? "bg-blue-600 text-white"
                 : "bg-white hover:bg-neutral-100")
             }
           >
@@ -214,9 +214,9 @@ export function PreviewPane({
                 : "Edit the page HTML directly"
             }
             className={
-              "px-3 py-1 text-xs border-l border-neutral-300 " +
+              "px-3 py-1 text-sm border-l border-neutral-300 " +
               (view === "html"
-                ? "bg-neutral-900 text-white"
+                ? "bg-blue-600 text-white"
                 : "bg-white hover:bg-neutral-100")
             }
           >
@@ -233,14 +233,14 @@ export function PreviewPane({
           </button>
         </div>
 
-        <div className="flex rounded border border-neutral-300 overflow-hidden">
+        <div className="flex rounded-md border border-neutral-300 overflow-hidden">
           <button
             type="button"
             onClick={() => onLangChange("en")}
             className={
-              "px-2 py-1 text-xs " +
+              "px-2 py-1 text-sm " +
               (lang === "en"
-                ? "bg-neutral-900 text-white"
+                ? "bg-blue-600 text-white"
                 : "bg-white hover:bg-neutral-100")
             }
             title={
@@ -262,9 +262,9 @@ export function PreviewPane({
             type="button"
             onClick={() => onLangChange("fr")}
             className={
-              "px-2 py-1 text-xs border-l border-neutral-300 " +
+              "px-2 py-1 text-sm border-l border-neutral-300 " +
               (lang === "fr"
-                ? "bg-neutral-900 text-white"
+                ? "bg-blue-600 text-white"
                 : "bg-white hover:bg-neutral-100")
             }
             title={
@@ -293,7 +293,7 @@ export function PreviewPane({
               ? "Translate current page to French"
               : "Translate current page to English"
           }
-          className="rounded border border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent"
+          className="rounded-md border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent"
         >
           {translating
             ? "Translating..."
@@ -306,7 +306,7 @@ export function PreviewPane({
           type="button"
           onClick={onOpenPalette}
           title="Insert a GCWeb component from the palette"
-          className="rounded border border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-100"
+          className="rounded-md border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100"
         >
           + Component
         </button>
@@ -316,7 +316,7 @@ export function PreviewPane({
         <button
           type="button"
           onClick={onLoad}
-          className="rounded border border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-100"
+          className="rounded-md border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100"
         >
           Load
         </button>
@@ -329,7 +329,7 @@ export function PreviewPane({
               ? "Save the page to disk (will apply your unsaved HTML edits first)"
               : "Save the page to disk"
           }
-          className="rounded border border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-100 disabled:opacity-50"
+          className="rounded-md border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100 disabled:opacity-50"
         >
           Save
         </button>
@@ -342,7 +342,7 @@ export function PreviewPane({
               ? "Copy the composed HTML (will apply your unsaved HTML edits first)"
               : "Copy the composed HTML to clipboard"
           }
-          className="rounded border border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-100 disabled:opacity-50"
+          className="rounded-md border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100 disabled:opacity-50"
         >
           Copy HTML
         </button>
@@ -355,7 +355,7 @@ export function PreviewPane({
               ? "Download the composed HTML (will apply your unsaved HTML edits first)"
               : "Download the composed HTML"
           }
-          className="rounded bg-neutral-900 px-2 py-1 text-xs text-white hover:bg-neutral-700 disabled:opacity-50"
+          className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-neutral-400"
         >
           Download
         </button>
@@ -376,13 +376,13 @@ export function PreviewPane({
               onChange={(e) => setHtmlDraft(e.target.value)}
               spellCheck={false}
               // Editor pane: dark theme matches a code editor, fills the
-              // available height. Tailwind's text-xs feels tight but it's
+              // available height. Tailwind's text-sm feels tight but it's
               // what the previous read-only pre used so we stay consistent.
-              className="flex-1 resize-none bg-neutral-900 p-3 font-mono text-xs leading-relaxed text-neutral-100 outline-none focus:bg-neutral-800"
+              className="flex-1 resize-none bg-neutral-900 p-3 font-mono text-sm leading-relaxed text-neutral-100 outline-none focus:bg-neutral-800"
               placeholder="<!-- No page yet. Send a prompt on the left, or paste HTML here. -->"
               aria-label="Edit page HTML"
             />
-            <div className="flex items-center gap-2 border-t border-neutral-700 bg-neutral-800 px-3 py-2 text-xs text-neutral-300">
+            <div className="flex items-center gap-2 border-t border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-300">
               <span className="text-neutral-400">
                 Editing breadcrumb + <code>&lt;main&gt;</code>. Shell is
                 auto-generated.
@@ -395,7 +395,7 @@ export function PreviewPane({
                 type="button"
                 onClick={cancelHtml}
                 disabled={!dirty}
-                className="rounded border border-neutral-600 px-2 py-1 text-xs text-neutral-200 hover:bg-neutral-700 disabled:opacity-40 disabled:hover:bg-transparent"
+                className="rounded-md border border-neutral-600 px-2 py-1 text-sm text-neutral-200 hover:bg-neutral-700 disabled:opacity-40 disabled:hover:bg-transparent"
               >
                 Cancel
               </button>
@@ -404,7 +404,7 @@ export function PreviewPane({
                 onClick={saveHtml}
                 disabled={!dirty}
                 title="Apply HTML changes (pushes an undo snapshot)"
-                className="rounded bg-amber-500 px-3 py-1 text-xs font-medium text-neutral-900 hover:bg-amber-400 disabled:opacity-40 disabled:hover:bg-amber-500"
+                className="rounded-md bg-amber-500 px-3 py-1 text-sm font-medium text-neutral-900 hover:bg-amber-400 disabled:opacity-40 disabled:hover:bg-amber-500"
               >
                 Save HTML
               </button>
