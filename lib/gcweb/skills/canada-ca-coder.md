@@ -256,3 +256,82 @@ Always use the `gc-chckbxrdio` fieldset class with `<ul class="list-unstyled lst
 ```
 
 For checkboxes, use `<li class="checkbox">` and `type="checkbox"` (no `name` needed unless you're submitting a form).
+
+## Wizards / Field flow (wb-fieldflow)
+
+WET-BOEW's wb-fieldflow plugin turns a nested `<ul>` of options into an interactive wizard with conditional results. Use this for multi-step decision trees, eligibility checkers, "which form do I need?" guides, etc. The shell loads `wet-boew.min.js`, so the JS is available — you only need to emit the markup.
+
+### Structure
+
+Three nested layers:
+
+1. **Wrapper** — `<div class="wb-frmvld hidden" id="ff">` containing the form. The `hidden` class is REQUIRED — wb-fieldflow removes it via the `unhideelm` config once the wizard initialises (progressive enhancement: without JS, the wizard stays hidden).
+2. **Form + field-flow root** — the form wraps a `<div class="wb-fieldflow gc-font-2019">` carrying a JSON config in `data-wb-fieldflow`.
+3. **Result divs** — siblings of the form, inside the wrapper, each `<div class="hidden result" id="...">`. Hidden by default; revealed when an option's action targets them.
+
+### Canonical config
+
+```json
+{
+  "noForm": true,
+  "renderas": "radio",
+  "gcChckbxrdio": true,
+  "unhideelm": "#ff",
+  "hideelm": "#content",
+  "base": { "live": true, "renderas": "radio", "gcChckbxrdio": true },
+  "default": { "action": "addClass", "source": ".result", "class": "hidden" },
+  "reset":   { "action": "addClass", "source": ".result", "class": "hidden" }
+}
+```
+
+- `renderas: "radio"` + `gcChckbxrdio: true` → render options as the GC large radio-button style.
+- `unhideelm: "#ff"` → unhide the wrapper once initialised.
+- `hideelm: "#content"` → hide the page's main content while the wizard is active (omit if you don't want this).
+- `default` and `reset` → hide all `.result` divs whenever the user changes an answer or resets.
+
+### Question pattern
+
+Each question is a `<p>` followed by a `<ul>` of `<li>` options. Two types of options:
+
+**Leaf options** (jump straight to a result) carry their own `data-wb-fieldflow`:
+
+```html
+<li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": "#result-x"}'>Option text</li>
+```
+
+**Branching options** nest a follow-up question inside `<div class="wb-fieldflow-sub">`:
+
+```html
+<li>Option text
+  <div class="wb-fieldflow-sub">
+    <p>Follow-up question?</p>
+    <ul>
+      <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": "#result-y"}'>Sub-option A</li>
+      <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": "#result-z"}'>Sub-option B</li>
+    </ul>
+  </div>
+</li>
+```
+
+**Critical rule:** every branching option must keep the follow-up question entirely INSIDE its own `<li>` (via `wb-fieldflow-sub`). Don't break the question out into a sibling. Nesting can go arbitrarily deep — questions inside questions inside questions.
+
+### Result divs
+
+Place all results at the end of the wrapper, after the closing `</form>`. Each result is a div with `class="hidden result"` and a unique id matched in some option's `source`. Content is just regular HTML — paragraphs, links, alerts, whatever guidance fits.
+
+```html
+<div id="result-x" class="hidden result">
+  <p>Guidance shown when the user reaches this leaf.</p>
+</div>
+```
+
+### Translating instructions to markup
+
+When the user describes a flow ("Q1 with options A and B; if A, ask Q2 with sub-options 1 and 2; if B, show result Z"):
+
+1. Identify every leaf (every "show result …" or "→ result …" terminal).
+2. Assign each leaf a unique id (`#result-a1`, `#result-b`, `#result-c`, etc.).
+3. Walk the tree top-down: each `<li>` is either a leaf (carries its own `data-wb-fieldflow` action) or a branch (wraps a `wb-fieldflow-sub` containing the next question).
+4. Emit the result divs after the form, matching ids.
+
+Use no custom CSS, no extra libraries — wb-fieldflow + the wb-frmvld wrapper handle styling, validation, and reset behaviour on their own.

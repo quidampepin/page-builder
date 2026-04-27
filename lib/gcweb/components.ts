@@ -368,38 +368,47 @@ export const COMPONENTS: PaletteComponent[] = [
   },
   {
     id: "field-flow",
-    label: "Field flow",
+    label: "Field flow (wizard)",
     category: "Forms",
     description:
-      "Multi-step task flow with numbered fieldsets — replace with your team's canonical markup if different.",
-    html: `<ol class="lst-num-spcd">
-  <li>
-    <fieldset class="gc-chckbxrdio">
-      <legend>Step 1 — Question or instruction</legend>
-      <ul class="list-unstyled lst-spcd-2">
-        <li class="radio">
-          <input type="radio" name="step1" id="step1-a">
-          <label for="step1-a">Option A</label>
+      "WET-BOEW wb-fieldflow — interactive wizard with nested follow-ups and conditional results.",
+    html: `<div class="wb-frmvld hidden" id="ff">
+  <form method="get">
+    <div class="wb-fieldflow gc-font-2019" data-wb-fieldflow='{
+      "noForm": true,
+      "renderas": "radio",
+      "gcChckbxrdio": true,
+      "unhideelm": "#ff",
+      "hideelm": "#content",
+      "base": { "live": true, "renderas": "radio", "gcChckbxrdio": true },
+      "default": { "action": "addClass", "source": ".result", "class": "hidden" },
+      "reset": { "action": "addClass", "source": ".result", "class": "hidden" }
+    }'>
+      <p>Replace with your first question.</p>
+      <ul>
+        <li>Option that has a follow-up
+          <div class="wb-fieldflow-sub">
+            <p>Replace with the follow-up question.</p>
+            <ul>
+              <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": "#ff-result-a"}'>Sub-option leading to result A</li>
+              <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": "#ff-result-b"}'>Sub-option leading to result B</li>
+            </ul>
+          </div>
         </li>
-        <li class="radio">
-          <input type="radio" name="step1" id="step1-b">
-          <label for="step1-b">Option B</label>
-        </li>
+        <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": "#ff-result-c"}'>Option that goes straight to result C</li>
       </ul>
-    </fieldset>
-  </li>
-  <li>
-    <fieldset class="gc-chckbxrdio">
-      <legend>Step 2 — Question or instruction</legend>
-      <p>Step 2 content — could be another input group, a text field, or further instructions.</p>
-    </fieldset>
-  </li>
-  <li>
-    <p class="mrgn-tp-md">
-      <a href="#" class="btn btn-call-to-action">Continue</a>
-    </p>
-  </li>
-</ol>`,
+    </div>
+  </form>
+  <div id="ff-result-a" class="hidden result">
+    <p><strong>Result A</strong> — replace with the guidance shown when the user reaches this leaf.</p>
+  </div>
+  <div id="ff-result-b" class="hidden result">
+    <p><strong>Result B</strong> — replace with the guidance shown when the user reaches this leaf.</p>
+  </div>
+  <div id="ff-result-c" class="hidden result">
+    <p><strong>Result C</strong> — replace with the guidance shown when the user reaches this leaf.</p>
+  </div>
+</div>`,
   },
 ];
 
