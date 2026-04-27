@@ -265,7 +265,7 @@ WET-BOEW's wb-fieldflow plugin turns a nested `<ul>` of options into an interact
 
 Three nested layers:
 
-1. **Wrapper** — `<div class="wb-frmvld hidden" id="ff">` containing the form. The `hidden` class is REQUIRED — wb-fieldflow removes it via the `unhideelm` config once the wizard initialises (progressive enhancement: without JS, the wizard stays hidden).
+1. **Wrapper** — `<div class="wb-frmvld" id="ff">` containing the form. (For production deployment with progressive enhancement, you can add `hidden` to keep the wizard invisible without JS, plus `"unhideelm": "#ff"` in the config to reveal it on init. For interactive preview use, omit both — the wizard shows immediately and works the same once JS runs.)
 2. **Form + field-flow root** — the form wraps a `<div class="wb-fieldflow gc-font-2019">` carrying a JSON config in `data-wb-fieldflow`.
 3. **Result divs** — siblings of the form, inside the wrapper, each `<div class="hidden result" id="...">`. Hidden by default; revealed when an option's action targets them.
 
@@ -276,8 +276,6 @@ Three nested layers:
   "noForm": true,
   "renderas": "radio",
   "gcChckbxrdio": true,
-  "unhideelm": "#ff",
-  "hideelm": "#content",
   "base": { "live": true, "renderas": "radio", "gcChckbxrdio": true },
   "default": { "action": "addClass", "source": ".result", "class": "hidden" },
   "reset":   { "action": "addClass", "source": ".result", "class": "hidden" }
@@ -285,9 +283,9 @@ Three nested layers:
 ```
 
 - `renderas: "radio"` + `gcChckbxrdio: true` → render options as the GC large radio-button style.
-- `unhideelm: "#ff"` → unhide the wrapper once initialised.
-- `hideelm: "#content"` → hide the page's main content while the wizard is active (omit if you don't want this).
 - `default` and `reset` → hide all `.result` divs whenever the user changes an answer or resets.
+
+For the progressive-enhancement variant, add `"unhideelm": "#ff"` (must match the wrapper id) and put `hidden` on the wrapper. Use `"hideelm": "#content"` only when you want the wizard to fully take over the page on init — omit it otherwise to avoid hiding content that may not have id `content`.
 
 ### Question pattern
 

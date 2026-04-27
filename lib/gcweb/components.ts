@@ -372,14 +372,12 @@ export const COMPONENTS: PaletteComponent[] = [
     category: "Forms",
     description:
       "WET-BOEW wb-fieldflow — interactive wizard with nested follow-ups and conditional results.",
-    html: `<div class="wb-frmvld hidden" id="ff">
+    html: `<div class="wb-frmvld" id="ff">
   <form method="get">
     <div class="wb-fieldflow gc-font-2019" data-wb-fieldflow='{
       "noForm": true,
       "renderas": "radio",
       "gcChckbxrdio": true,
-      "unhideelm": "#ff",
-      "hideelm": "#content",
       "base": { "live": true, "renderas": "radio", "gcChckbxrdio": true },
       "default": { "action": "addClass", "source": ".result", "class": "hidden" },
       "reset": { "action": "addClass", "source": ".result", "class": "hidden" }
