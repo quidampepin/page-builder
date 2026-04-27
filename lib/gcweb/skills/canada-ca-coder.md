@@ -333,3 +333,107 @@ When the user describes a flow ("Q1 with options A and B; if A, ask Q2 with sub-
 4. Emit the result divs after the form, matching ids.
 
 Use no custom CSS, no extra libraries — wb-fieldflow + the wb-frmvld wrapper handle styling, validation, and reset behaviour on their own.
+
+## Source documents — fidelity rule
+
+When the user attaches a source document (.docx, .pdf, .txt, .md, .html), treat it as the **single source of truth** for the page's content and structure. Specifically:
+
+- **Do not invent navigation patterns the source doesn't have.** If the source doesn't have a table of contents, don't add an "On this page" block. If the source doesn't have services-and-information links, don't add a doormat grid. The user can ask for those additions explicitly in a follow-up turn.
+- **Preserve every hyperlink.** The extractor renders Word/HTML hyperlinks as `[text](url)` markdown. Convert each one to an `<a href="url">text</a>` in the output. Don't drop URLs even if you think they're broken — the user wants the link text and href round-tripped.
+- **Treat "Document comments" as guidance.** If the extracted text ends with a `## Document comments (reviewer guidance)` section, those are review comments the author left in the Word doc to instruct you. Use them to choose patterns, classes, or copy adjustments. They are NOT page content — don't render them in the output.
+- **Match the source's heading hierarchy.** Don't promote or demote headings. If the source has H2 → H3 → H4, the output should have H2 → H3 → H4.
+- **Mirror the source's section count and order.** Sections in the same order as the source, no merging or splitting unless the user asks.
+
+When the user asks for additions or restructuring on a follow-up turn, then GCWeb patterns are fair game. The fidelity rule applies only to the initial document-driven generation.
+
+## "On this page" — in-page table of contents
+
+When you DO add a table-of-contents block (because the user asked for one, or because the source document includes one), it MUST follow the canonical Canada.ca pattern. There is exactly one correct shape:
+
+```html
+<section>
+  <h2>On this page</h2>
+  <ul>
+    <li><a href="#anchor-1">Heading 2 text</a></li>
+    <li><a href="#anchor-2">Another Heading 2 text</a></li>
+    <li><a href="#anchor-3">Third Heading 2 text</a></li>
+  </ul>
+</section>
+```
+
+Hard rules:
+
+1. **Always use the "On this page" heading** as an `<h2>`. Never a bare list with no heading. Never another label (no "Contents", no "In this section", no "Quick links" — always exactly "On this page" in English, "Sur cette page" in French).
+2. **Always an unordered list** (`<ul>`). Never `<ol>`, never numbered. Even if the page contents are a numbered process, the TOC itself stays unordered.
+3. **Only link to Heading 2 (`<h2>`) sections.** Never include H3, H4, or deeper. The TOC is a top-level overview, not a full outline.
+4. **Each H2 referenced in the TOC must have an `id`** so the anchor link works. If the page H2 is `<h2>Eligibility</h2>`, give it `<h2 id="eligibility">Eligibility</h2>` and link to `#eligibility`.
+5. **Only add a TOC when it earns its place.** Pages with 4+ H2 sections benefit from it. Shorter pages (2 or 3 H2s) don't need one — the user can see the structure without scrolling.
+6. **Place it directly after the H1 / page intro paragraph**, before the first H2. Not at the bottom, not nested inside another section.
+
+If the user asks "add a TOC" or "add an on-this-page", produce exactly this structure. If the user asks something like "make a contents box at the top", clarify they mean the canonical "On this page" pattern and produce it.
+
+In French (`lang="fr"` pages), use `<h2>Sur cette page</h2>` as the heading. The list structure and rules are otherwise identical.
+
+## Images and illustrations
+
+Three image patterns are available. Pick based on what the page needs:
+
+### 1. Real photos via Loremflickr (most common)
+
+For photographic content — people, places, scenes, objects. Loremflickr serves real Flickr photos by tag, so the imagery looks like it could appear on a real Canada.ca page (which uses commissioned/licensed photography, not AI art).
+
+```html
+<figure class="mrgn-bttm-md">
+  <img src="https://loremflickr.com/800/400/canada,landscape" alt="Describe the image" class="img-responsive">
+  <figcaption>Caption describing the photo.</figcaption>
+</figure>
+```
+
+URL pattern: `https://loremflickr.com/<width>/<height>/<comma-separated-tags>`. Pick tags that describe the topic — e.g. `canada,winter,city` for a winter cityscape; `family,outdoors` for a generic family-services photo. Use 2–3 tags for best results; too many tags = no matches.
+
+When generating a page from a Word doc or instruction, **prefer Loremflickr URLs over `placehold.co`** unless the user explicitly asks for a generic placeholder. Real photos make prototypes feel finished.
+
+### 2. Inline SVG illustrations
+
+For icons, diagrams, simple flat illustrations, decorative elements. Use this when:
+
+- The user asks for an icon ("add a maple-leaf icon to the heading")
+- The image is a diagram, chart, or schematic
+- The page needs a decorative graphic that doesn't make sense as a photo
+- The image is small (under ~200 × 200) where SVG is sharper than a JPEG
+
+Canonical structure:
+
+```html
+<figure class="mrgn-bttm-md text-center" role="img" aria-label="Description of the illustration">
+  <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" class="img-responsive" style="max-width: 400px; margin: 0 auto;">
+    <title>Description of the illustration</title>
+    <!-- paths, shapes, text — Claude generates these -->
+  </svg>
+  <figcaption>Optional caption.</figcaption>
+</figure>
+```
+
+SVG generation rules:
+
+- **Use `viewBox`** instead of fixed `width`/`height` so the illustration scales responsively. Common ratios: 1:1 (icons), 2:1 (banners), 4:3 / 16:9 (illustrations).
+- **Include `<title>`** as the first child for accessibility — screen readers announce it. The figure's `aria-label` should match.
+- **Stick to a flat colour palette** — Canada.ca's brand uses `#284162` (deep blue), `#26374a` (header blue), `#ea1d2c` (red), `#f5f5f5` (well grey), and shades of grey. Avoid gradients unless the user asks for them.
+- **Keep paths simple.** A maple leaf, a checkmark in a circle, a stylized building — all good. Photo-realistic faces or complex scenes — bad; use Loremflickr instead.
+- **No JavaScript inside SVG**, no `<script>`. Static markup only.
+- **Don't include external image references** (`<image href="...">`) — defeats the point of inline SVG.
+
+### 3. Generic placeholder (`placehold.co`)
+
+Reserve for cases where the user explicitly wants a "this is where an image goes" grey box rather than realistic content. Useful when prototyping layout decisions where the image's content is irrelevant.
+
+```html
+<figure class="mrgn-bttm-md">
+  <img src="https://placehold.co/800x400" alt="Describe the image" class="img-responsive">
+  <figcaption>Caption.</figcaption>
+</figure>
+```
+
+### Picking between Loremflickr and SVG
+
+Default to **Loremflickr** for photographic subjects (people, scenes, objects). Default to **SVG** for icons, diagrams, and decorative shapes. If the user asks for "an image of X" without further detail, photo is the safer guess. If the user asks for "an icon", "a diagram", "a graph" — SVG.

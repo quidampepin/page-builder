@@ -3,11 +3,6 @@
  *
  * The LLM never regenerates this. It only produces the breadcrumb + <main>
  * content. Compose.ts plugs that content into these constants.
- *
- * Markup is copied verbatim from the GCWeb static-header-footer example:
- *   https://github.com/wet-boew/GCWeb/blob/master/docs/static-header-footer/bootstrap-3.html
- * with CDN asset URLs pointing at wet-boew.github.io (the version the user
- * specified in the project brief).
  */
 
 export type Lang = "en" | "fr";
@@ -16,12 +11,17 @@ const CDN_BASE = "https://wet-boew.github.io/themes-dist/GCWeb";
 
 const ASSETS = {
   css: `${CDN_BASE}/GCWeb/css/theme.min.css`,
-  // Méli-mélo is the experimental GCWeb pattern set (conjunction "and/or"
-  // groups, numbered step lists, etc.). Loading it always so palette
-  // patterns that use those classes (cnjnctn-type-or, lst-stps, …) render
-  // correctly. Pages that don't use those patterns aren't affected — the
-  // CSS only adds rules scoped to its own class names.
   meliMeloCss: `${CDN_BASE}/GCWeb/m%C3%A9li-m%C3%A9lo/2025-12-mille-iles.css`,
+  // jQuery is a hard dependency for WET-BOEW — wet-boew.min.js and its
+  // localised variants don't bundle it; they expect a global jQuery to
+  // already be loaded. Real Canada.ca pages pull jQuery 2.2.4 from
+  // googleapis before WET-BOEW. We mirror that here.
+  jquery: "https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js",
+  // Plain WET-BOEW bundle — same one canada.ca loads. Locale strings
+  // are pulled at runtime by the bundle itself based on <html lang>.
+  // The locale-baked wet-boew-en.min.js / wet-boew-fr.min.js paths
+  // don't exist on this CDN — using them gives "wb is not defined" in
+  // theme.min.js because the script fails to load.
   wetJs: `${CDN_BASE}/wet-boew/js/wet-boew.min.js`,
   themeJs: `${CDN_BASE}/GCWeb/js/theme.min.js`,
   sigEn: `${CDN_BASE}/GCWeb/assets/sig-blk-en.svg`,
@@ -55,24 +55,12 @@ const STRINGS = {
     subFooterHeading: "Government of Canada Corporate",
     links: {
       allContacts: ["All contacts", "https://www.canada.ca/en/contact.html"],
-      departments: [
-        "Departments and agencies",
-        "https://www.canada.ca/en/government/dept.html",
-      ],
-      aboutGov: [
-        "About government",
-        "https://www.canada.ca/en/government/system.html",
-      ],
+      departments: ["Departments and agencies", "https://www.canada.ca/en/government/dept.html"],
+      aboutGov: ["About government", "https://www.canada.ca/en/government/system.html"],
       social: ["Social media", "https://www.canada.ca/en/social.html"],
       mobile: ["Mobile applications", "https://www.canada.ca/en/mobile.html"],
-      aboutCanadaCa: [
-        "About Canada.ca",
-        "https://www.canada.ca/en/government/about.html",
-      ],
-      terms: [
-        "Terms and conditions",
-        "https://www.canada.ca/en/transparency/terms.html",
-      ],
+      aboutCanadaCa: ["About Canada.ca", "https://www.canada.ca/en/government/about.html"],
+      terms: ["Terms and conditions", "https://www.canada.ca/en/transparency/terms.html"],
       privacy: ["Privacy", "https://www.canada.ca/en/transparency/privacy.html"],
     },
     wordmarkAlt: "Symbol of the Government of Canada",
@@ -98,32 +86,14 @@ const STRINGS = {
     mainFooterHeading: "Gouvernement du Canada",
     subFooterHeading: "Gouvernement du Canada",
     links: {
-      allContacts: [
-        "Toutes les coordonnées",
-        "https://www.canada.ca/fr/contact.html",
-      ],
-      departments: [
-        "Ministères et organismes",
-        "https://www.canada.ca/fr/gouvernement/min.html",
-      ],
-      aboutGov: [
-        "À propos du gouvernement",
-        "https://www.canada.ca/fr/gouvernement/systeme.html",
-      ],
+      allContacts: ["Toutes les coordonnées", "https://www.canada.ca/fr/contact.html"],
+      departments: ["Ministères et organismes", "https://www.canada.ca/fr/gouvernement/min.html"],
+      aboutGov: ["À propos du gouvernement", "https://www.canada.ca/fr/gouvernement/systeme.html"],
       social: ["Médias sociaux", "https://www.canada.ca/fr/sociaux.html"],
       mobile: ["Applications mobiles", "https://www.canada.ca/fr/mobile.html"],
-      aboutCanadaCa: [
-        "À propos de Canada.ca",
-        "https://www.canada.ca/fr/gouvernement/a-propos.html",
-      ],
-      terms: [
-        "Avis",
-        "https://www.canada.ca/fr/transparence/avis.html",
-      ],
-      privacy: [
-        "Confidentialité",
-        "https://www.canada.ca/fr/transparence/confidentialite.html",
-      ],
+      aboutCanadaCa: ["À propos de Canada.ca", "https://www.canada.ca/fr/gouvernement/a-propos.html"],
+      terms: ["Avis", "https://www.canada.ca/fr/transparence/avis.html"],
+      privacy: ["Confidentialité", "https://www.canada.ca/fr/transparence/confidentialite.html"],
     },
     wordmarkAlt: "Symbole du gouvernement du Canada",
   },
@@ -138,26 +108,9 @@ export function head(title: string, lang: Lang): string {
 <link rel="stylesheet" href="${ASSETS.css}">
 <link rel="stylesheet" href="${ASSETS.meliMeloCss}">
 <style>
-/*
- * Bands escape-hatch.
- *
- * <main> in this app is rendered with class="container" (Bootstrap's
- * max-width centred wrapper). That works for normal content, but it
- * means full-width bands (<section class="well"> and the topic-page
- * "most requested" pattern) can't reach the viewport edges — they're
- * trapped inside the container's max-width.
- *
- * Real Canada.ca pages avoid this by NOT putting .container on <main>
- * and putting .container on each section instead. Refactoring to that
- * convention would require regenerating every saved page. Instead, we
- * use negative margins to let bands break out of any .container parent
- * and span the full viewport. The band's INNER .container (which we
- * still emit) keeps the content centred — so the visible content
- * column lines up with non-band sections above and below.
- *
- * Limited to direct children of main.container so we don't accidentally
- * break .well usage elsewhere on the page.
- */
+/* Bands escape-hatch — direct children of main.container that carry
+   .well, .gc-most-requested, or .gc-band span the full viewport via
+   negative margins. Inner .container re-centres content. */
 main.container > section.well,
 main.container > section.gc-most-requested,
 main.container > section.gc-band,
@@ -222,8 +175,7 @@ export function header(lang: Lang): string {
         </nav>
       </div>
     </div>
-  </div>
-  <!-- Breadcrumb is injected by the LLM, before <main> -->`;
+  </div>`;
 }
 
 export function footer(lang: Lang): string {
@@ -263,8 +215,15 @@ export function footer(lang: Lang): string {
 </footer>`;
 }
 
-export function scripts(): string {
-  return `<script src="${ASSETS.wetJs}"></script>
+export function scripts(_lang: Lang = "en"): string {
+  // Load order matters and must match canada.ca:
+  //   1. jQuery (WET-BOEW depends on it as a global)
+  //   2. wet-boew.min.js (sets up the `wb` global, all plugins)
+  //   3. theme.min.js (GCWeb theme hooks; references `wb`)
+  // Skip any of these or get the order wrong and the iframe console
+  // shouts "jQuery is not defined" or "wb is not defined".
+  return `<script src="${ASSETS.jquery}"></script>
+<script src="${ASSETS.wetJs}"></script>
 <script src="${ASSETS.themeJs}"></script>`;
 }
 

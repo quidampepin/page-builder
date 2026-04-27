@@ -42,7 +42,7 @@ ${header(lang)}
 ${breadcrumb}
 ${main}
 ${footer(lang)}
-${scripts()}
+${scripts(lang)}
 </body>
 </html>`;
 }

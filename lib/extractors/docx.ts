@@ -2,42 +2,94 @@
  * Extract text from a .docx file.
  *
  * Mammoth used to ship a `convertToMarkdown` helper but dropped it in
- * 1.x — the typed API only exposes `convertToHtml` and
- * `extractRawText`. We use `convertToHtml` (preserves headings/lists)
- * and run a tiny tag→markdown transform so the output keeps useful
- * structure when the LLM ingests it as prose.
+ * 1.x. We use `convertToHtml` (preserves headings/lists/links) and run
+ * a tiny tag→markdown transform so the output keeps useful structure
+ * when the LLM ingests it as prose.
  *
- * The transform is intentionally crude: it covers the elements
- * mammoth typically emits (h1–h6, p, ul/ol/li, strong/em, br) and
- * strips everything else. Word documents rarely contain weirder HTML
- * than that, and the LLM is forgiving about minor noise.
+ * Two extras beyond mammoth's default:
+ *   1. Hyperlinks are converted to `[text](url)` markdown so URLs
+ *      survive the bare-tag strip later in the pipeline. Without this,
+ *      `<a href="...">text</a>` becomes just "text" and the LLM has
+ *      no link target to preserve in its output.
+ *   2. Word review comments are extracted from `word/comments.xml`
+ *      inside the .docx zip and appended as a "Document comments"
+ *      section. This lets reviewers leave guidance for the LLM
+ *      directly in the source document.
  */
 
 import mammoth from "mammoth";
+import JSZip from "jszip";
 
 export async function extractDocx(buffer: Buffer): Promise<string> {
   const result = await mammoth.convertToHtml({ buffer });
-  // Mammoth attaches warnings to result.messages; we swallow them to keep
-  // the UI clean. Log them server-side for debugging.
   if (result.messages.length) {
     console.log(
       `[docx] ${result.messages.length} extraction notes:`,
       result.messages.slice(0, 3),
     );
   }
-  return htmlToMarkdownish(result.value).trim();
+
+  const body = htmlToMarkdownish(result.value).trim();
+  const comments = await extractComments(buffer);
+
+  if (comments.length === 0) return body;
+
+  // Append comments as a labeled section so the LLM can tell them
+  // apart from main content and treat them as guidance.
+  const commentsBlock =
+    "\n\n---\n\n## Document comments (reviewer guidance)\n\n" +
+    comments.map((c, i) => `${i + 1}. ${c}`).join("\n");
+  return body + commentsBlock;
 }
 
 /**
- * Mammoth's HTML output → markdown-ish plain text.
+ * Pull review comments out of `word/comments.xml` inside the .docx
+ * zip. The format is well-known — each comment is a `<w:comment>`
+ * element containing `<w:t>` runs with the visible text. We don't
+ * need a full XML parser; a regex grabs the text runs in order.
  *
- * Why "markdown-ish": this isn't a full HTML→MD converter (we don't
- * need that — the consumer is an LLM, not a renderer). The goal is
- * just to preserve heading hierarchy and list shape so the LLM can
- * tell sections apart.
+ * Returns [] if the file has no comments or extraction fails. We
+ * never throw — comments are best-effort, not mandatory.
+ */
+async function extractComments(buffer: Buffer): Promise<string[]> {
+  try {
+    const zip = await JSZip.loadAsync(buffer);
+    const file = zip.file("word/comments.xml");
+    if (!file) return [];
+    const xml = await file.async("text");
+
+    // Each comment groups <w:t> runs between <w:comment> and </w:comment>.
+    // Walk comment-by-comment so multi-paragraph comments stay together.
+    const comments: string[] = [];
+    const commentBlocks = xml.match(/<w:comment\b[\s\S]*?<\/w:comment>/g) || [];
+    for (const block of commentBlocks) {
+      const runs = block.match(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g) || [];
+      const text = runs
+        .map((r) => r.replace(/<[^>]+>/g, ""))
+        .join("")
+        .trim();
+      if (text) comments.push(text);
+    }
+    return comments;
+  } catch (err) {
+    console.log("[docx] failed to extract comments:", err);
+    return [];
+  }
+}
+
+/**
+ * Mammoth's HTML output → markdown-ish plain text. Preserves heading
+ * hierarchy, list shape, and hyperlinks; strips everything else.
  */
 function htmlToMarkdownish(html: string): string {
   return html
+    // Hyperlinks first — must run before the bare-tag strip below or
+    // the href gets lost. Capture the href and inner text into a
+    // `[text](url)` markdown link.
+    .replace(
+      /<a\b[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi,
+      "[$2]($1)",
+    )
     .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, "\n# $1\n")
     .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, "\n## $1\n")
     .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, "\n### $1\n")

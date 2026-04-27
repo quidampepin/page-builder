@@ -252,12 +252,38 @@ export const COMPONENTS: PaletteComponent[] = [
   },
   {
     id: "image",
-    label: "Image",
+    label: "Image (placeholder)",
     category: "Content",
-    description: "Responsive image with optional caption.",
+    description: "Plain responsive image — generic grey box. Replace src with your real image URL.",
     html: `<figure class="mrgn-bttm-md">
   <img src="https://placehold.co/800x400" alt="Describe the image" class="img-responsive">
   <figcaption>Caption text describing the image.</figcaption>
+</figure>`,
+  },
+  {
+    id: "photo",
+    label: "Photo (Loremflickr)",
+    category: "Content",
+    description:
+      "Real photo matching tags via Loremflickr — replace tags in the URL with your topic.",
+    html: `<figure class="mrgn-bttm-md">
+  <img src="https://loremflickr.com/800/400/canada,landscape" alt="Describe the image" class="img-responsive">
+  <figcaption>Caption text describing the photo.</figcaption>
+</figure>`,
+  },
+  {
+    id: "illustration-svg",
+    label: "SVG illustration",
+    category: "Content",
+    description:
+      "Inline SVG placeholder. Ask Claude in chat to fill in real illustration paths.",
+    html: `<figure class="mrgn-bttm-md text-center" role="img" aria-label="Replace with a description of the illustration">
+  <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" class="img-responsive" style="max-width: 400px; margin: 0 auto;">
+    <title>Replace with a description of the illustration</title>
+    <rect x="10" y="10" width="380" height="220" fill="#f5f5f5" stroke="#284162" stroke-width="2" rx="8"/>
+    <text x="200" y="125" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#284162">SVG illustration placeholder</text>
+  </svg>
+  <figcaption>Caption text describing the illustration.</figcaption>
 </figure>`,
   },
   {
@@ -371,40 +397,47 @@ export const COMPONENTS: PaletteComponent[] = [
     label: "Field flow (wizard)",
     category: "Forms",
     description:
-      "WET-BOEW wb-fieldflow — interactive wizard with nested follow-ups and conditional results.",
-    html: `<div class="wb-frmvld" id="ff">
-  <form method="get">
-    <div class="wb-fieldflow gc-font-2019" data-wb-fieldflow='{
-      "noForm": true,
-      "renderas": "radio",
-      "gcChckbxrdio": true,
-      "base": { "live": true, "renderas": "radio", "gcChckbxrdio": true },
-      "default": { "action": "addClass", "source": ".result", "class": "hidden" },
-      "reset": { "action": "addClass", "source": ".result", "class": "hidden" }
-    }'>
-      <p>Replace with your first question.</p>
-      <ul>
-        <li>Option that has a follow-up
-          <div class="wb-fieldflow-sub">
-            <p>Replace with the follow-up question.</p>
-            <ul>
-              <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": "#ff-result-a"}'>Sub-option leading to result A</li>
-              <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": "#ff-result-b"}'>Sub-option leading to result B</li>
-            </ul>
-          </div>
-        </li>
-        <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": "#ff-result-c"}'>Option that goes straight to result C</li>
-      </ul>
-    </div>
-  </form>
-  <div id="ff-result-a" class="hidden result">
-    <p><strong>Result A</strong> — replace with the guidance shown when the user reaches this leaf.</p>
+      "WET-BOEW wb-fieldflow — interactive wizard. Results target classes (.r1, .r2…), are siblings of wb-frmvld.",
+    html: `<div class="wb-fieldflow-wrapper">
+  <div class="wb-frmvld hidden" id="ff">
+    <form>
+      <div class="wb-fieldflow gc-font-2019" data-wb-fieldflow='{
+        "noForm": true,
+        "renderas": "radio",
+        "gcChckbxrdio": true,
+        "unhideelm": "#ff",
+        "hideelm": ".r1, .r2, .r3",
+        "base": { "live": true, "renderas": "radio", "gcChckbxrdio": true },
+        "default": [ {"action": "addClass", "class": "hidden", "source": ".r1, .r2, .r3"} ],
+        "reset": [ {"action": "addClass", "class": "hidden", "source": ".r1, .r2, .r3"} ]
+      }'>
+        <p>Replace with your first question.</p>
+        <ul>
+          <li>Option that has a follow-up
+            <div class="wb-fieldflow-sub">
+              <p>Replace with the follow-up question.</p>
+              <ul>
+                <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": ".r1"}'>Sub-option leading to result 1</li>
+                <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": ".r2"}'>Sub-option leading to result 2</li>
+              </ul>
+            </div>
+          </li>
+          <li data-wb-fieldflow='{"action": "removeClass", "class": "hidden", "source": ".r3"}'>Option that goes straight to result 3</li>
+        </ul>
+      </div>
+    </form>
   </div>
-  <div id="ff-result-b" class="hidden result">
-    <p><strong>Result B</strong> — replace with the guidance shown when the user reaches this leaf.</p>
+  <div class="r1 hidden">
+    <h3>Result 1</h3>
+    <p>Replace with the guidance shown when the user reaches this leaf.</p>
   </div>
-  <div id="ff-result-c" class="hidden result">
-    <p><strong>Result C</strong> — replace with the guidance shown when the user reaches this leaf.</p>
+  <div class="r2 hidden">
+    <h3>Result 2</h3>
+    <p>Replace with the guidance shown when the user reaches this leaf.</p>
+  </div>
+  <div class="r3 hidden">
+    <h3>Result 3</h3>
+    <p>Replace with the guidance shown when the user reaches this leaf.</p>
   </div>
 </div>`,
   },
