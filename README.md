@@ -150,4 +150,4 @@ scripts/sync-skill.mjs       Re-pulls skills from ~/.claude/skills/
 
 ## Licence
 
-Personal / prototype code for now. Decide on a licence before the repo goes public.
+MIT License
