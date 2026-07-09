@@ -29,3 +29,23 @@ body {
 *::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Rendered-markdown styling for the auditor analysis panels
+   (feedback, heuristics, user tasks, change summary). */
+.md h1 { font-size: 1.4rem; font-weight: 700; margin: 1rem 0 0.5rem; }
+.md h2 { font-size: 1.2rem; font-weight: 700; margin: 1rem 0 0.5rem; }
+.md h3 { font-size: 1.05rem; font-weight: 600; margin: 0.85rem 0 0.4rem; }
+.md h4 { font-size: 1rem; font-weight: 600; margin: 0.75rem 0 0.35rem; }
+.md p { margin: 0.5rem 0; line-height: 1.55; }
+.md ul { list-style: disc; margin: 0.5rem 0 0.5rem 1.25rem; }
+.md ol { list-style: decimal; margin: 0.5rem 0 0.5rem 1.25rem; }
+.md li { margin: 0.2rem 0; line-height: 1.5; }
+.md strong { font-weight: 700; }
+.md em { font-style: italic; }
+.md code { background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.85em; }
+.md blockquote { border-left: 3px solid #cbd5e1; padding-left: 0.75rem; color: #475569; margin: 0.5rem 0; }
+.md hr { border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0; }
+.md table { border-collapse: collapse; width: 100%; margin: 0.75rem 0; font-size: 0.85rem; }
+.md th, .md td { border: 1px solid #e2e8f0; padding: 0.4rem 0.55rem; text-align: left; vertical-align: top; }
+.md th { background: #f8fafc; font-weight: 600; }
+.md a { color: #1d4ed8; text-decoration: underline; }

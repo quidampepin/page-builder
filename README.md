@@ -151,3 +151,38 @@ scripts/sync-skill.mjs       Re-pulls skills from ~/.claude/skills/
 ## Licence
 
 MIT License
+
+---
+
+## Site Auditor (the home page)
+
+The app's home page (`/`) is now the **GC Site Auditor** — it audits a
+Canada.ca node and lets you rebuild any page with the **full page builder
+embedded in the Build tab** (chat, component palette, HTML editor, EN/FR
+translate, undo/redo, save/load — everything the standalone builder did).
+
+What the auditor does:
+
+- **Crawl** a Canada.ca URL to the chosen depth; download the information
+  architecture as Markdown or JSON.
+- **Map** the node and its children (SVG tree); export as SVG or PNG.
+- **Feedback** — match comments from your IRCC CSV to a page or its subtree and
+  analyze them (feedback-analyst skill). Download comments (CSV) and analysis (MD).
+- **User tasks** — job stories + usability scenarios (job-stories skill).
+- **Heuristics** — a heuristic evaluation (ux-reviewer skill).
+- **Build** — the full page builder, seeded with the selected page, plus an
+  ✨ *Improve from evidence* action that feeds the feedback + heuristics into the
+  rewrite, and a **Compare with original** view (side-by-side render, a
+  plain-language change summary, and an optional code diff).
+
+Everything is downloadable: IA, map, comments, analyses, and the rebuilt page
+(`.html` / `.gcpage.json`).
+
+Feedback CSV: drop your export at **`data/ircc-feedback.csv`** (a sample ships
+there). The parser auto-detects the URL, comment, and date columns; see
+`data/README.md`.
+
+Auditor API routes: `/api/crawl`, `/api/page`, `/api/feedback`,
+`/api/analyze-feedback`, `/api/user-tasks`, `/api/heuristics`,
+`/api/summarize-changes` (plus the builder's existing `/api/chat`,
+`/api/translate`, `/api/extract`, `/api/import-url`).

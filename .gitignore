@@ -39,3 +39,9 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# stale scaffold folder (superseded — merged into the root app)
+/auditor/
+
+# retired standalone builder route (builder is embedded in the Build tab)
+/app/builder/
