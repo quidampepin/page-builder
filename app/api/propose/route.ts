@@ -27,7 +27,7 @@ import type { Lang } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 function extractH1(main: string): string | null {
   const m = main.match(/<h1[^>]*id=["']wb-cont["'][^>]*>([\s\S]*?)<\/h1>/i);
@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
     const raw = await client.generateHtml({
       systemPrompt: proposePrompt(lang),
       userMessage,
+      purpose: "analysis",
     });
 
     const split = extractContent(raw);

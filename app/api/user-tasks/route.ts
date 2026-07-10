@@ -20,7 +20,7 @@ import type { Lang } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 function stripTags(html: string): string {
   return html
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as {
       pages?: { title: string; url: string; content: string }[];
       feedbackThemes?: string;
+      analyticsThemes?: string;
       lang?: Lang;
     };
     const pages = (body.pages ?? []).filter((p) => p.content?.trim());
@@ -59,12 +60,16 @@ export async function POST(req: NextRequest) {
       (body.feedbackThemes
         ? `Real user feedback themes to ground your stories:\n${body.feedbackThemes}\n\n`
         : "") +
+      (body.analyticsThemes
+        ? `Analytics assessment for the same page(s):\n${body.analyticsThemes}\n\n`
+        : "") +
       `Page content:\n\n${pagesBlock}`;
 
     const client = createLLMClient();
     const markdown = await client.generateHtml({
       systemPrompt: userTasksPrompt(lang),
       userMessage,
+      purpose: "analysis",
     });
 
     return NextResponse.json({ markdown });

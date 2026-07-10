@@ -23,7 +23,10 @@ function inline(s: string): string {
   t = t.replace(/(^|[^*])\*([^*]+)\*/g, (_, p, c) => `${p}<em>${c}</em>`);
   t = t.replace(
     /\[([^\]]+)\]\((https?:[^)]+)\)/g,
-    (_, text, href) => `<a href="${href}" target="_blank" rel="noopener">${text}</a>`,
+    (_, text, href) => {
+      const safe = String(href).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      return `<a href="${safe}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    },
   );
   // <br> support (used inside table cells by the feedback skill).
   t = t.replace(/&lt;br\s*\/?&gt;/gi, "<br>");

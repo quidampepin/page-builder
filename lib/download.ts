@@ -5,6 +5,7 @@
  */
 
 import type { CrawlResult, FeedbackRow, PageNode } from "./types";
+import { nodeLabel } from "./label";
 
 export function slugify(s: string): string {
   return (
@@ -41,16 +42,6 @@ export function downloadBlob(filename: string, blob: Blob) {
   URL.revokeObjectURL(url);
 }
 
-function shortLabel(node: PageNode): string {
-  if (node.title && node.title !== node.url) return node.title;
-  try {
-    const p = new URL(node.url).pathname.split("/").filter(Boolean);
-    return p[p.length - 1] || node.url;
-  } catch {
-    return node.url;
-  }
-}
-
 /** Render the crawl tree as an indented Markdown outline (the IA). */
 export function treeToMarkdown(result: CrawlResult): string {
   const lines: string[] = [
@@ -63,7 +54,7 @@ export function treeToMarkdown(result: CrawlResult): string {
   for (const node of result.nodes) {
     const indent = "  ".repeat(node.depth);
     const flag = node.error ? " ⚠️" : "";
-    lines.push(`${indent}- [${shortLabel(node)}](${node.url})${flag}`);
+    lines.push(`${indent}- [${nodeLabel(node)}](${node.url})${flag}`);
   }
   lines.push("");
   return lines.join("\n");

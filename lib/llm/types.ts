@@ -46,7 +46,7 @@ export interface GenerateHtmlOptions {
    * is the route most likely to bump against Vercel's 60s timeout. Using
    * a faster model just for translate is the cheapest fix.
    */
-  purpose?: "chat" | "translate";
+  purpose?: "chat" | "translate" | "analysis";
 }
 
 export interface ChatTurn {

@@ -15,7 +15,7 @@ import { createLLMClient } from "@/lib/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const SYSTEM = `You compare two versions of a Canada.ca page (the ORIGINAL and the REVISED)
 and explain what changed, for a content owner who is not technical.
@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
     const markdown = await client.generateHtml({
       systemPrompt: SYSTEM + langLine,
       userMessage,
+      purpose: "analysis",
     });
 
     return NextResponse.json({ markdown });

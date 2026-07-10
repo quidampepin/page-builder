@@ -251,3 +251,52 @@ export function matchFeedback(
 
   return { url: pageUrl, subtree, matched, totalRows: body.length, columns };
 }
+
+/**
+ * Extract every comment from an uploaded feedback CSV, without URL filtering.
+ * Used when the page has no URL (blank/generated page) or the user opts to
+ * analyze the whole file. Runs client-side (pure).
+ */
+export function extractAllComments(csvText: string): FeedbackResult {
+  const rows = parseCsv(csvText);
+  if (rows.length < 2) {
+    return {
+      url: "",
+      subtree: false,
+      matched: [],
+      totalRows: 0,
+      columns: { url: null, comment: null, date: null },
+      note: "CSV appears empty or has no data rows.",
+    };
+  }
+  const det = detectColumns(rows);
+  const headers = det.headers;
+  const body = rows.slice(1);
+  const columns = {
+    url: det.url !== null ? headers[det.url] : null,
+    comment: det.comment !== null ? headers[det.comment] : null,
+    date: det.date !== null ? headers[det.date] : null,
+  };
+  if (det.comment === null) {
+    return {
+      url: "",
+      subtree: false,
+      matched: [],
+      totalRows: body.length,
+      columns,
+      note: "Could not find a comment column. Add a column named 'Comment' or 'Details'.",
+    };
+  }
+  const matched: FeedbackRow[] = [];
+  for (const r of body) {
+    const comment = (r[det.comment] ?? "").trim();
+    if (!comment) continue;
+    matched.push({
+      url: det.url !== null ? (r[det.url] ?? "").trim() : "",
+      comment,
+      date: det.date !== null ? (r[det.date] ?? "").trim() || undefined : undefined,
+      extra: {},
+    });
+  }
+  return { url: "", subtree: false, matched, totalRows: body.length, columns };
+}

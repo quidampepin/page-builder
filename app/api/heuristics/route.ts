@@ -16,7 +16,7 @@ import type { Lang } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
       url?: string;
       content?: string;
       feedbackThemes?: string;
+      analyticsThemes?: string;
+      userTasks?: string;
       lang?: Lang;
     };
     if (!body.content?.trim()) {
@@ -41,12 +43,19 @@ export async function POST(req: NextRequest) {
       (body.feedbackThemes
         ? `Real user feedback themes (corroborate findings against these where relevant):\n${body.feedbackThemes}\n\n`
         : "") +
+      (body.analyticsThemes
+        ? `Analytics assessment (use to temper or corroborate findings):\n${body.analyticsThemes}\n\n`
+        : "") +
+      (body.userTasks
+        ? `User tasks the page should support:\n${body.userTasks}\n\n`
+        : "") +
       `Rendered content (breadcrumb + <main> HTML):\n\n\`\`\`html\n${body.content.slice(0, 24000)}\n\`\`\``;
 
     const client = createLLMClient();
     const markdown = await client.generateHtml({
       systemPrompt: heuristicsPrompt(lang),
       userMessage,
+      purpose: "analysis",
     });
 
     return NextResponse.json({ markdown });

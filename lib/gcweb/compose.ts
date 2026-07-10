@@ -129,6 +129,18 @@ export function sanitizeContent(raw: string): string {
   // Drop <link rel="stylesheet"> — external CSS can't be relied on here.
   s = s.replace(/<link[^>]+rel=["']stylesheet["'][^>]*>/gi, "");
 
+  // Strip ACTIVE content from the author area so a preview or downloaded page
+  // can't run injected script (defence-in-depth against prompt-injected model
+  // output). The trusted GCWeb shell scripts are added by compose() AFTER this
+  // step, so WET interactivity (accordions, tabs) still works.
+  s = s.replace(/<script\b[\s\S]*?<\/script\s*>/gi, "");
+  s = s.replace(/<script\b[^>]*>/gi, "");
+  s = s.replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+  s = s.replace(
+    /\b(href|src)\s*=\s*("\s*javascript:[^"]*"|'\s*javascript:[^']*'|javascript:[^\s>]+)/gi,
+    '$1="#"',
+  );
+
   // Rewrite broken <img src> values to placehold.co so the preview always
   // renders something, instead of showing a broken-image icon.
   s = s.replace(/<img\b[^>]*>/gi, (tag) => fixImageTag(tag));

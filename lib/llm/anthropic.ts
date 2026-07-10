@@ -26,6 +26,12 @@ const DEFAULT_MODEL = "claude-sonnet-4-6";
  * exceed that on longer pages.
  */
 const DEFAULT_TRANSLATE_MODEL = "claude-haiku-4-5-20251001";
+/**
+ * Default model for analysis-heavy tasks (feedback + analytics assessment,
+ * heuristics, user tasks, change summaries, report synthesis, page rewrites).
+ * Opus 4.8 gives the strongest reasoning; override per env if you need speed.
+ */
+const DEFAULT_ANALYSIS_MODEL = "claude-opus-4-8";
 const MAX_TOKENS = 8192;
 
 /**
@@ -67,6 +73,9 @@ export function createAnthropicClient(): LLMClient {
     process.env.ANTHROPIC_MODEL ||
     DEFAULT_TRANSLATE_MODEL
   ).trim();
+  const analysisModel = (
+    process.env.ANTHROPIC_ANALYSIS_MODEL || DEFAULT_ANALYSIS_MODEL
+  ).trim();
   const client = new Anthropic({ apiKey });
 
   return {
@@ -77,7 +86,12 @@ export function createAnthropicClient(): LLMClient {
       history = [],
       purpose,
     }: GenerateHtmlOptions): Promise<string> {
-      const model = purpose === "translate" ? translateModel : chatModel;
+      const model =
+        purpose === "translate"
+          ? translateModel
+          : purpose === "analysis"
+            ? analysisModel
+            : chatModel;
       const messages: Anthropic.Messages.MessageParam[] = [];
 
       // Prior conversation turns (kept short by the caller — full transcript

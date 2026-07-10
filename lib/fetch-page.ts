@@ -57,14 +57,45 @@ export async function fetchPage(url: string): Promise<FetchedPage> {
     );
   }
 
-  const res = await fetch(url, {
-    headers: { "User-Agent": UA, Accept: "text/html" },
-  });
+  // Bound the request so a slow/hanging origin can't tie up a serverless
+  // function until the platform timeout.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: { "User-Agent": UA, Accept: "text/html" },
+      redirect: "follow",
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(`Timed out fetching ${url}`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
   if (!res.ok) {
     throw new Error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
   }
 
-  const html = await res.text();
+  // SSRF guard: if the origin redirected us off the allow-list, refuse.
+  try {
+    const finalHost = new URL(res.url).hostname;
+    if (finalHost && !isAllowedHost(finalHost)) {
+      throw new Error(`Refused: ${url} redirected to a disallowed host (${finalHost}).`);
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith("Refused:")) throw e;
+  }
+
+  // Cap the body so a pathologically large page can't exhaust memory.
+  const lenHeader = Number(res.headers.get("content-length") || 0);
+  if (lenHeader && lenHeader > 8_000_000) {
+    throw new Error(`Refused: ${url} is too large (${lenHeader} bytes).`);
+  }
+  const html = (await res.text()).slice(0, 8_000_000);
   const $ = cheerio.load(html);
 
   const origin = `${parsed.protocol}//${parsed.host}`;

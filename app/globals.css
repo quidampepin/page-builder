@@ -49,3 +49,44 @@ body {
 .md th, .md td { border: 1px solid #e2e8f0; padding: 0.4rem 0.55rem; text-align: left; vertical-align: top; }
 .md th { background: #f8fafc; font-weight: 600; }
 .md a { color: #1d4ed8; text-decoration: underline; }
+
+/* ===== ccuxt dark theme ===== */
+body { background: #f8fafc; }
+html.dark body { background: #0b1220; color: #e5e7eb; }
+
+/* Dark markdown */
+html.dark .md code { background: #1e293b; color: #e2e8f0; }
+html.dark .md blockquote { border-left-color: #334155; color: #94a3b8; }
+html.dark .md hr { border-top-color: #1e293b; }
+html.dark .md th, html.dark .md td { border-color: #1e293b; }
+html.dark .md th { background: #111827; }
+html.dark .md a { color: #60a5fa; }
+
+/* ===== gc-builder dark overrides =====
+   The embedded page builder (ChatPanel, PreviewPane, ComponentPalette, Compare)
+   was ported with a light-only neutral palette. Rather than add dark: variants
+   to every element, we scope a handful of overrides to .gc-builder in dark mode
+   so its chrome is readable. The preview/component iframes are separate
+   documents and are unaffected (they render the real, light Canada.ca page). */
+html.dark .gc-builder { color: #e5e7eb; }
+html.dark .gc-builder .bg-white { background-color: #0f172a !important; }
+html.dark .gc-builder .bg-neutral-50,
+html.dark .gc-builder .bg-neutral-50\/50 { background-color: #111827 !important; }
+html.dark .gc-builder .bg-neutral-100 { background-color: #1e293b !important; }
+html.dark .gc-builder .bg-neutral-200 { background-color: #0b1220 !important; }
+html.dark .gc-builder .bg-slate-100 { background-color: #0b1220 !important; }
+html.dark .gc-builder .bg-slate-50 { background-color: #111827 !important; }
+html.dark .gc-builder .text-neutral-900,
+html.dark .gc-builder .text-slate-900 { color: #f1f5f9 !important; }
+html.dark .gc-builder .text-neutral-700,
+html.dark .gc-builder .text-slate-700 { color: #cbd5e1 !important; }
+html.dark .gc-builder .text-neutral-600,
+html.dark .gc-builder .text-neutral-500,
+html.dark .gc-builder .text-slate-600,
+html.dark .gc-builder .text-slate-500 { color: #94a3b8 !important; }
+html.dark .gc-builder .text-neutral-400 { color: #64748b !important; }
+html.dark .gc-builder .border-neutral-200,
+html.dark .gc-builder .border-neutral-300,
+html.dark .gc-builder .border-slate-200 { border-color: #334155 !important; }
+html.dark .gc-builder .ring-neutral-200 { --tw-ring-color: #334155 !important; }
+html.dark .gc-builder .placeholder\:text-neutral-400::placeholder { color: #64748b !important; }

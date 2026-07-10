@@ -36,6 +36,7 @@ interface Evidence {
   feedbackAnalysis?: string;
   heuristics?: string;
   userTasks?: string;
+  analytics?: string;
 }
 
 interface Props {
@@ -62,6 +63,7 @@ export default function BuilderPanel({
   const [pending, setPending] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [improving, setImproving] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [rightView, setRightView] = useState<"edit" | "compare">("edit");
 
@@ -80,7 +82,7 @@ export default function BuilderPanel({
   }, [originalContent, originalTitle, originalLang]);
 
   const hasEvidence = Boolean(
-    evidence.feedbackAnalysis || evidence.heuristics || evidence.userTasks,
+    evidence.feedbackAnalysis || evidence.heuristics || evidence.userTasks || evidence.analytics,
   );
 
   function pushHistory(current: BuilderAppState) {
@@ -422,18 +424,38 @@ export default function BuilderPanel({
   }
 
   // --- Evidence-driven quick actions ---
-  function improveFromEvidence() {
-    const parts: string[] = [];
-    if (evidence.feedbackAnalysis) parts.push(`# User feedback analysis\n\n${evidence.feedbackAnalysis}`);
-    if (evidence.heuristics) parts.push(`# Heuristic evaluation\n\n${evidence.heuristics}`);
-    if (evidence.userTasks) parts.push(`# User tasks the page must support\n\n${evidence.userTasks}`);
-    const message =
-      "Improve this page to fix the problems below. Make concrete changes to content, " +
-      "structure, findability, and plain language so the page better supports its users. " +
-      "Keep all factual content; don't invent programs, dates, or figures.\n\n" +
-      parts.join("\n\n---\n\n");
-    void send(message, []);
+  async function improveFromEvidence() {
+    if (!hasEvidence) return;
+    setImproving(true);
+    setError(null);
     setRightView("edit");
+    try {
+      // Distill all evidence into a short prioritized brief server-side, so the
+      // builder chat prompt stays small instead of pasting every full analysis.
+      const res = await fetch("/api/improve-brief", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          content: activePage.content || undefined,
+          feedbackAnalysis: evidence.feedbackAnalysis,
+          analytics: evidence.analytics,
+          heuristics: evidence.heuristics,
+          userTasks: evidence.userTasks,
+          lang: state.lang,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || `Brief failed (${res.status})`);
+      const message =
+        "Apply these prioritized improvements to the page. Make the concrete edits; " +
+        "keep all facts.\n\n" +
+        data.brief;
+      await send(message, []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setImproving(false);
+    }
   }
 
   function plainLanguage() {
@@ -462,17 +484,17 @@ export default function BuilderPanel({
   const contentDiffersFromOriginal = activePage.content.trim() !== originalContent.trim();
 
   return (
-    <div className="flex h-full min-h-0">
+    <div className="gc-builder flex h-full min-h-0">
       {/* Left: quick actions + chat */}
       <div className="flex w-[380px] flex-shrink-0 flex-col border-r border-neutral-200">
         <div className="flex flex-wrap gap-1.5 border-b border-neutral-200 bg-neutral-50 p-2">
           <button
             onClick={improveFromEvidence}
-            disabled={pending || !hasEvidence}
-            title={hasEvidence ? "Ask Claude to fix the page using the feedback + heuristics you gathered" : "Run the Feedback and Heuristics tabs first to gather evidence"}
+            disabled={pending || improving || !hasEvidence}
+            title={hasEvidence ? "Distill the feedback/analytics/heuristics into a short brief, then apply it to the page" : "Gather evidence in the Feedback, Analytics, User tasks or Heuristics tabs first"}
             className="rounded-full bg-canada px-3 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-40"
           >
-            ✨ Improve from evidence
+            {improving ? "✨ Improving…" : "✨ Improve from evidence"}
           </button>
           <button
             onClick={plainLanguage}

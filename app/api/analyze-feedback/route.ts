@@ -16,7 +16,7 @@ import type { Lang } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
     const markdown = await client.generateHtml({
       systemPrompt: feedbackAnalysisPrompt(lang),
       userMessage,
+      purpose: "analysis",
     });
 
     return NextResponse.json({ markdown });

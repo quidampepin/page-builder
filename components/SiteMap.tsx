@@ -3,6 +3,7 @@
 import { useMemo, useRef } from "react";
 import type { PageNode } from "@/lib/types";
 import { downloadBlob, downloadText } from "@/lib/download";
+import { nodeLabel } from "@/lib/label";
 
 interface Laid {
   node: PageNode;
@@ -15,16 +16,6 @@ const ROW_H = 34;
 const BOX_W = 190;
 const BOX_H = 24;
 const PAD = 20;
-
-function label(node: PageNode): string {
-  if (node.title && node.title !== node.url) return node.title;
-  try {
-    const p = new URL(node.url).pathname.split("/").filter(Boolean);
-    return p[p.length - 1] || node.url;
-  } catch {
-    return node.url;
-  }
-}
 
 /**
  * On-demand visual map of the crawled node and its children. A simple tidy
@@ -191,7 +182,7 @@ export default function SiteMap({
                 strokeWidth={1.5}
               />
               <text x={8} y={BOX_H / 2 + 4} fontSize={11} fill={isSel ? "#ffffff" : "#0f172a"}>
-                {label(l.node).slice(0, 26)}
+                {nodeLabel(l.node).slice(0, 30)}
               </text>
             </g>
           );

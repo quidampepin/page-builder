@@ -1,188 +1,71 @@
-# GC Page Builder 
+# Canada.ca UX tool
 
-A local-first web app for prototyping Canada.ca pages by chatting with Claude. Describe the page in the left panel, attach a Word doc or screenshot if you have one, and a real GCWeb-themed page renders live in the iframe on the right. Iterate through chat — *"add three feature cards"*, *"rewrite this in plain language"*, *"translate to French"* — or insert components from a palette, or edit the HTML by hand.
-
-It's effectively the `canada-ca-coder` skill, plus a live preview, edit ops, undo, a component palette, bilingual support, and a manual HTML editor.
+A local-first Next.js app for assessing **and rebuilding** Canada.ca pages.
+Crawl a section (or skip the crawl entirely), analyze real user feedback and
+analytics, generate the user tasks a page should support, run a balanced
+heuristic review, propose GCWeb-compliant fixes with the embedded page builder,
+and export a full report as HTML or PDF.
 
 ## Run locally
 
 ```bash
 npm install
-cp .env.example .env.local        # paste your Anthropic API key
+cp .env.example .env.local        # add your ANTHROPIC_API_KEY
 npm run dev                       # http://localhost:3000
 ```
 
-Get a key from <https://console.anthropic.com/>. The only required env var is `ANTHROPIC_API_KEY`; everything else has defaults.
+## The tabs
 
-## Deploy to Vercel
+Everything works on a **current page**, which can come from a crawl, a single
+URL, or a blank page you generate from scratch.
 
-1. Push the repo to GitHub.
-2. Vercel → **Add New → Project → Import** the repo. Next.js is auto-detected; keep all defaults.
-3. **Settings → Environment Variables** → add `ANTHROPIC_API_KEY` (Production scope, at minimum).
-4. **Deploy.** First build runs `npm install` + `next build`.
+- **Page & IA** — where you search/crawl. Enter a Canada.ca URL and *Crawl
+  section* (depth 0–5), *Open one page*, or *＋ Blank page* to build from
+  nothing. Shows the information architecture as a tree or a visual map (export
+  SVG/PNG), plus a live preview. The IA only appears in this tab.
+- **Feedback** — **upload** a feedback CSV (columns auto-detected). Optionally
+  filter to the current page's URL (and its children), then analyze the comments
+  (issues, sentiment, key phrases, recommendations). Download comments + analysis.
+- **Analytics** — **upload** an analytics CSV (visits, exits, time on page,
+  internal search, task success — whatever you have) and get a concise
+  assessment. Download it.
+- **User tasks** — job stories, usability scenarios, and user-need statements,
+  automatically grounded in your feedback and analytics when present.
+- **Heuristics** — a balanced, concise heuristic review (calm rating, a few
+  real findings with severity + a fix, and what's working) that uses your
+  feedback, analytics, and user tasks as evidence.
+- **Build** — the full GC Page Builder seeded with the current page: chat to
+  create/improve/edit, component palette, HTML editor, EN/FR translate,
+  undo/redo, save/load. **✨ Improve from evidence** feeds all gathered insight
+  into one rewrite. **Compare with original** shows before/after side by side
+  with a plain-language change summary.
+- **Report** — assembles everything (optional AI executive summary + feedback +
+  analytics + user tasks + heuristics) into a polished report. **Download HTML**
+  or **Download PDF** (opens the print dialog → Save as PDF).
 
-**Optional basic-auth gate.** Set `BASIC_AUTH_USER` and `BASIC_AUTH_PASS` env vars on Vercel and the `middleware.ts` at the project root will return 401 + `WWW-Authenticate: Basic` for unauthenticated requests — your browser shows its native sign-in dialog. Leave both unset for local dev so `npm run dev` doesn't prompt. Worth turning on for any public deployment so random URL-finders can't burn your Anthropic credits.
+## Theme
 
-**Save/load is browser-side.** Save downloads a `.gcpage.json` file; Load reads one back via a file picker. Same JSON shape as the previous server-side save flow (older saves still load), with no filesystem dependency — runs identically in dev and on serverless.
+Light/dark toggle in the top bar (☾ / ☀), remembered between visits and matched
+to your OS preference on first load.
 
-## How it works
+## Models
 
-```
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                            INPUT                                 │
-  │  Chat textarea  |  File uploads (.docx .pdf .txt .md .html img)  │
-  └────────────────────────┬─────────────────────────────────────────┘
-                           │  POST /api/extract  (per file)
-                           │  → { filename, mimeType, text | base64 }
-                           ▼
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                       ORCHESTRATION                              │
-  │                                                                  │
-  │  POST /api/chat                                                  │
-  │    • getSystemPrompt(lang, currentHtml)                          │
-  │         └─ reads lib/gcweb/skills/*.md                           │
-  │    • LLMClient.generateHtml(...)  ← single interface             │
-  │         └─ adapter: lib/llm/anthropic.ts                         │
-  │    • extractContent(rawHtml)  → { breadcrumb, main }             │
-  │    • compose({title, content, lang}) → full page                 │
-  └────────────────────────┬─────────────────────────────────────────┘
-                           │  { content, composed, title, lang }
-                           ▼
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                          PREVIEW                                 │
-  │                                                                  │
-  │  iframe (sandbox="allow-scripts allow-same-origin")              │
-  │    srcDoc = composed                                             │
-  │                                                                  │
-  │  composed = [DOCTYPE + head + header]                            │
-  │           + LLM-generated breadcrumb                             │
-  │           + LLM-generated <main>                                 │
-  │           + [footer + scripts]                                   │
-  │                                                                  │
-  │  The "[...]" bits are constants in lib/gcweb/shell.ts.           │
-  │  Never regenerated — saves tokens, prevents drift.               │
-  └──────────────────────────────────────────────────────────────────┘
-```
+Model choice is per task, for the best results:
 
-**The LLM only produces two things:** a `<nav id="wb-bc">` breadcrumb and a `<main>`. Everything else — HTML head, Canada.ca signature, search bar, menu, footer, WET-BOEW scripts — lives in [`lib/gcweb/shell.ts`](lib/gcweb/shell.ts) and is wrapped around the LLM output by [`lib/gcweb/compose.ts`](lib/gcweb/compose.ts). That keeps token costs down and prevents the chrome drifting visually from real Canada.ca.
+- **Analysis** (feedback, analytics, user tasks, heuristics, change summaries,
+  report synthesis, page rewrites) → **Opus 4.8** (`claude-opus-4-8`).
+- **Page generation / edits** (Build chat) → Sonnet, for responsiveness.
+- **Translate** → Haiku.
 
-The system prompt is composed at request time from five markdown files in [`lib/gcweb/skills/`](lib/gcweb/skills/) — copies of your Claude Code skills (`canada-ca-coder`, `canada-ca-writer`, `canada-ca-seo`, `canada-ca-doormat`, `gc-component-mapping`). Edit any of them and the next chat turn picks up the change. Re-sync from `~/.claude/skills/` with `npm run sync-skill`.
+Override any of these with `ANTHROPIC_ANALYSIS_MODEL`, `ANTHROPIC_MODEL`, and
+`ANTHROPIC_TRANSLATE_MODEL`. Opus is slower: on Vercel Hobby the 60s function
+limit can cause 504s on large inputs — locally it's fine. If you hit timeouts,
+set `ANTHROPIC_ANALYSIS_MODEL=claude-sonnet-4-6`. Analysis routes request up to
+`maxDuration = 300` (needs a plan that allows it).
 
-The CDN assets (`wet-boew.github.io/themes-dist/GCWeb/...`) are the same ones real Canada.ca pages load, so the preview matches production pixel-for-pixel.
+## Notes
 
-## Features
-
-**Two output modes.** After the first turn, Claude can return either a `<!--GCPB:EDITS-->` block of targeted CSS-selector ops (`replace`, `insertBefore`, `setAttr`, etc.) for narrow changes — applied with cheerio in [`lib/gcweb/edits.ts`](lib/gcweb/edits.ts) — or a full breadcrumb + `<main>` regeneration for sweeping rewrites. Claude picks; the chat UI shows a chip on each turn (`N edits applied` / `Full rewrite`) so you can see which path ran.
-
-**Bilingual EN/FR.** State has two independent slots, `pages.en` and `pages.fr`. The EN/FR toggle picks which feeds the preview — no API call, `compose()` is pure. Chat edits only affect the active slot. The **Translate** button fills the other slot via [`/api/translate`](app/api/translate/route.ts) using a narrower prompt that preserves every tag, class, ID, and RDFa attribute and swaps only the visible text.
-
-**Smart re-translate.** After the first translate in a given direction, subsequent translates diff the current source against a snapshot from the last translate, classify each top-level section as unchanged / source-edited / both-edited (conflict), and only re-translate sections that need it. Unchanged sections stay byte-identical — including any manual edits you made on the target side. A typical single-section edit goes from ~2000 tokens to ~200.
-
-**Component palette.** The **+ Component** button opens a modal with ~20 GCWeb patterns (alerts, feature cards, doormat grids, accordions, tabs, …) each shown as a live scaled-down preview in a sandboxed iframe. Pick one, choose where (top / bottom / before or after a specific section), and it's inserted client-side via `DOMParser` — no LLM, no network. The catalogue's HTML is byte-identical to what Claude generates for the same component, so edit ops and Figma round-trips work without special cases.
-
-**Manual HTML editing.** The Preview pane has an **HTML** toggle that turns the iframe into a textarea editing the raw breadcrumb + `<main>`. Save HTML commits the edit (it's run through `extractContent()` to normalize, the title is re-derived from the new h1, undo snapshot pushed). The toolbar's **Save** / **Copy HTML** / **Download** buttons auto-commit any pending HTML edits before running so you never lose unsaved work.
-
-**Undo / redo.** Linear stack capped at 30 entries, persisted to localStorage. Snapshots before every mutation — chat send, EN/FR swap, translate, palette insert, manual HTML edit, load. Try wild rewrites; you can always get back.
-
-**File attachments.** `.docx` (mammoth → markdown-ish text), `.pdf` (pdf-parse text layer), `.txt` / `.md` / `.html` / `.json` (passed through), images (base64 → Claude vision).
-
-## File map
-
-```
-app/
-├── layout.tsx               Root layout (Tailwind CSS)
-├── page.tsx                 Main UI — chat panel + preview pane
-└── api/
-    ├── chat/route.ts        LLM orchestration (edit + full modes)
-    ├── extract/route.ts     File extraction (docx/pdf/text/image/json)
-    ├── compose/route.ts     Deterministic shell wrap (no LLM)
-    ├── translate/route.ts   EN ↔ FR translation (narrow LLM prompt)
-    └── pages/route.ts       Deprecated 410 stub (save/load is client-side)
-
-components/
-├── ChatPanel.tsx            Left pane — messages + textarea + attachments
-├── PreviewPane.tsx          Right pane — iframe + HTML editor + toolbar
-├── ComponentPalette.tsx     Click-to-insert modal
-├── ComponentPreview.tsx     Sandboxed iframe rendering a scaled palette tile
-└── FileAttachments.tsx      File picker + chip list
-
-lib/
-├── gcweb/
-│   ├── shell.ts             Head/header/footer/scripts (EN + FR)
-│   ├── compose.ts           Wraps content in shell; extracts breadcrumb/main
-│   ├── extract-title.ts     Pulls h1 text for shell <title> sync
-│   ├── edits.ts             Parses + applies GCPB:EDITS op blocks
-│   ├── components.ts        Palette catalogue (canonical GCWeb HTML)
-│   ├── insert-client.ts     Browser-side component inserter (DOMParser)
-│   ├── split.ts             Section split/join for smart re-translate
-│   ├── smart-translate.ts   Diff-and-patch re-translation orchestrator
-│   ├── system-prompt.ts     Composes the system prompt from skills/*.md
-│   ├── translate-prompt.ts  Narrower system prompt for EN ↔ FR
-│   └── skills/              Embedded copies of your Claude Code skills
-├── llm/
-│   ├── types.ts             LLMClient interface
-│   ├── anthropic.ts         Anthropic API adapter
-│   └── index.ts             Factory (reads LLM_PROVIDER env)
-└── extractors/
-    ├── docx.ts              mammoth → markdown-ish text
-    ├── pdf.ts               pdf-parse wrapper
-    └── image.ts             base64 helper
-
-middleware.ts                Optional HTTP basic-auth gate (env-driven)
-scripts/sync-skill.mjs       Re-pulls skills from ~/.claude/skills/
-```
-
-## Limitations
-
-- **No streaming.** Chat waits for the full response. Upgrade is straightforward: Anthropic's `.stream()` + Next `ReadableStream`.
-- **No OCR for scanned PDFs.** Text layer only — upload as an image instead.
-- **Vercel Hobby caps serverless functions at 60s.** Smart re-translate keeps each call narrow so it's usually fine; full translates of very large pages may bump up against this.
-- **Public deployments without the basic-auth gate are open to anyone with the URL** and any guest can spend your Anthropic credits.
-
-## Roadmap
-
-- Streaming chat responses.
-- Component-tree IR (LLM emits JSON, server renders to HTML — cleaner editing, easier undo).
-- Drag-and-drop palette overlay rendered on the preview iframe (postMessage between iframe and parent).
-- Figma MCP integration (`gc-figma-bridge`) for bidirectional sync with the IRCC design library.
-- Multi-provider LLM (OpenAI, Claude subscription via OAuth).
-- Proper saved-pages library UI (in-app list, rename, delete, export bundle).
-
-## Licence
-
-MIT License
-
----
-
-## Site Auditor (the home page)
-
-The app's home page (`/`) is now the **GC Site Auditor** — it audits a
-Canada.ca node and lets you rebuild any page with the **full page builder
-embedded in the Build tab** (chat, component palette, HTML editor, EN/FR
-translate, undo/redo, save/load — everything the standalone builder did).
-
-What the auditor does:
-
-- **Crawl** a Canada.ca URL to the chosen depth; download the information
-  architecture as Markdown or JSON.
-- **Map** the node and its children (SVG tree); export as SVG or PNG.
-- **Feedback** — match comments from your IRCC CSV to a page or its subtree and
-  analyze them (feedback-analyst skill). Download comments (CSV) and analysis (MD).
-- **User tasks** — job stories + usability scenarios (job-stories skill).
-- **Heuristics** — a heuristic evaluation (ux-reviewer skill).
-- **Build** — the full page builder, seeded with the selected page, plus an
-  ✨ *Improve from evidence* action that feeds the feedback + heuristics into the
-  rewrite, and a **Compare with original** view (side-by-side render, a
-  plain-language change summary, and an optional code diff).
-
-Everything is downloadable: IA, map, comments, analyses, and the rebuilt page
-(`.html` / `.gcpage.json`).
-
-Feedback CSV: drop your export at **`data/ircc-feedback.csv`** (a sample ships
-there). The parser auto-detects the URL, comment, and date columns; see
-`data/README.md`.
-
-Auditor API routes: `/api/crawl`, `/api/page`, `/api/feedback`,
-`/api/analyze-feedback`, `/api/user-tasks`, `/api/heuristics`,
-`/api/summarize-changes` (plus the builder's existing `/api/chat`,
-`/api/translate`, `/api/extract`, `/api/import-url`).
+- Feedback and analytics are uploaded in the browser per session — nothing is
+  read from disk, so no data files need to live in the repo.
+- The standalone `/builder` route was retired; the builder is embedded in the
+  Build tab.
