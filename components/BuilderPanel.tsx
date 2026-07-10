@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -48,6 +50,8 @@ interface Props {
   originalContent: string;
   originalLang: Lang;
   evidence: Evidence;
+  /** When n increments, send `text` as a chat message (used by 'Apply this fix'). */
+  seedMessage?: { text: string; n: number };
 }
 
 export default function BuilderPanel({
@@ -59,13 +63,25 @@ export default function BuilderPanel({
   originalContent,
   originalLang,
   evidence,
+  seedMessage,
 }: Props) {
   const [pending, setPending] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [improving, setImproving] = useState(false);
+  const lastSeed = useRef(0);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [rightView, setRightView] = useState<"edit" | "compare">("edit");
+
+  // Apply-this-fix from the Actions backlog: when the seed counter changes,
+  // send the fix text as a chat message.
+  useEffect(() => {
+    if (seedMessage && seedMessage.n > 0 && seedMessage.n !== lastSeed.current) {
+      lastSeed.current = seedMessage.n;
+      void send(seedMessage.text, []);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedMessage]);
 
   const activePage = state.pages[state.lang];
   const otherLang: Lang = state.lang === "en" ? "fr" : "en";

@@ -11,6 +11,11 @@ interface Slice {
   analytics?: string;
   userTasks?: string;
   heuristics?: string;
+  seo?: string;
+  doormats?: string;
+  accessibility?: string;
+  readability?: string;
+  linkCheck?: string;
   reportSummary?: string;
   loadingReport?: boolean;
 }
@@ -35,6 +40,11 @@ export default function ReportPanel({
     state.analytics && "analytics",
     state.userTasks && "user tasks",
     state.heuristics && "heuristics",
+    state.seo && "SEO",
+    state.doormats && "doormats",
+    state.accessibility && "accessibility",
+    state.readability && "readability",
+    state.linkCheck && "link check",
   ].filter(Boolean) as string[];
 
   const sections = useMemo<ReportSection[]>(() => {
@@ -44,8 +54,13 @@ export default function ReportPanel({
     if (state.analytics) s.push({ heading: "Analytics assessment", markdown: state.analytics });
     if (state.userTasks) s.push({ heading: "User tasks", markdown: state.userTasks });
     if (state.heuristics) s.push({ heading: "Heuristic evaluation", markdown: state.heuristics });
+    if (state.seo) s.push({ heading: "SEO & findability", markdown: state.seo });
+    if (state.doormats) s.push({ heading: "Doormats", markdown: state.doormats });
+    if (state.accessibility) s.push({ heading: "Accessibility", markdown: state.accessibility });
+    if (state.readability) s.push({ heading: "Readability", markdown: state.readability });
+    if (state.linkCheck) s.push({ heading: "Link check", markdown: state.linkCheck });
     return s;
-  }, [state.reportSummary, state.feedbackAnalysis, state.analytics, state.userTasks, state.heuristics]);
+  }, [state.reportSummary, state.feedbackAnalysis, state.analytics, state.userTasks, state.heuristics, state.seo, state.doormats, state.accessibility, state.readability, state.linkCheck]);
 
   const html = useMemo(
     () =>
@@ -77,6 +92,11 @@ export default function ReportPanel({
           analytics: state.analytics,
           userTasks: state.userTasks,
           heuristics: state.heuristics,
+          seo: state.seo,
+          doormats: state.doormats,
+          accessibility: state.accessibility,
+          readability: state.readability,
+          links: state.linkCheck,
           lang,
         }),
       });

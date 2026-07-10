@@ -42,6 +42,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createLLMClient, type Attachment, type ChatTurn } from "@/lib/llm";
 import { getSystemPrompt } from "@/lib/gcweb/system-prompt";
+import { readSharedSkill } from "@/lib/skills";
 import { compose, extractContent } from "@/lib/gcweb/compose";
 import { applyEdits, parseEdits } from "@/lib/gcweb/edits";
 import type { Lang } from "@/lib/gcweb/shell";
@@ -73,10 +74,15 @@ export async function POST(req: NextRequest) {
     const lang = body.lang ?? "en";
     const title = body.title ?? "New page";
 
-    const systemPrompt = getSystemPrompt({
+    let systemPrompt = getSystemPrompt({
       lang,
       currentHtml: body.currentContent,
     });
+    // Only pay the data-viz skill's tokens when the request is actually about a
+    // chart/graph — keeps the common edit path lean.
+    if (/\b(chart|graph|data\s*viz|visuali[sz]|plot|infographic|pie|donut|dashboard)\b/i.test(body.message)) {
+      systemPrompt += `\n\n---\n\n# Data visualization reference: data-viz-canada-ca\n\n${readSharedSkill("data-viz-canada-ca")}`;
+    }
 
     const client = createLLMClient();
     const rawHtml = await client.generateHtml({

@@ -31,6 +31,11 @@ export async function POST(req: NextRequest) {
       analytics?: string;
       userTasks?: string;
       heuristics?: string;
+      seo?: string;
+      doormats?: string;
+      accessibility?: string;
+      readability?: string;
+      links?: string;
       lang?: Lang;
     };
     const lang: Lang = body.lang === "fr" ? "fr" : "en";
@@ -40,6 +45,11 @@ export async function POST(req: NextRequest) {
     if (body.analytics?.trim()) parts.push(`# Analytics assessment\n\n${body.analytics.trim()}`);
     if (body.userTasks?.trim()) parts.push(`# User tasks\n\n${body.userTasks.trim()}`);
     if (body.heuristics?.trim()) parts.push(`# Heuristic evaluation\n\n${body.heuristics.trim()}`);
+    if (body.seo?.trim()) parts.push(`# SEO & findability\n\n${body.seo.trim()}`);
+    if (body.doormats?.trim()) parts.push(`# Doormats\n\n${body.doormats.trim()}`);
+    if (body.accessibility?.trim()) parts.push(`# Accessibility\n\n${body.accessibility.trim()}`);
+    if (body.readability?.trim()) parts.push(`# Readability\n\n${body.readability.trim()}`);
+    if (body.links?.trim()) parts.push(`# Link check\n\n${body.links.trim()}`);
 
     if (parts.length === 0) {
       return NextResponse.json(

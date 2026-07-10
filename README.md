@@ -69,3 +69,28 @@ set `ANTHROPIC_ANALYSIS_MODEL=claude-sonnet-4-6`. Analysis routes request up to
   read from disk, so no data files need to live in the repo.
 - The standalone `/builder` route was retired; the builder is embedded in the
   Build tab.
+
+## More assessments (Assess tab), Actions, and Section audit
+
+The **Assess** tab is a dashboard of checks for the current page, each grounded in your
+feedback/analytics when available:
+
+- **Readability** — Flesch-Kincaid grade + metrics, with a before/after badge as you edit.
+- **Accessibility** — real automated WCAG A/AA checks via axe-core, run against the preview.
+- **Link check** — verifies on-domain outbound links (external links are skipped for safety).
+- **User tasks**, **Heuristics**, **SEO & findability** (`canada-ca-seo`), and **Doormats**
+  (`canada-ca-doormat`).
+
+The **Actions** tab turns everything you've gathered into one prioritized, de-duplicated,
+checkable backlog (severity · effort · evidence · fix). Each item has **Apply this fix →**,
+which drops the fix into the Build tab's chat. Export as CSV or Markdown.
+
+The **Section** tab (after a crawl) builds a **content inventory** across all pages — words,
+reading grade, a static accessibility score, link count — as a sortable table and CSV, plus an
+optional **section IA recommendation** (merge/split/reorder).
+
+**Data viz:** in the Build tab, ask for a "chart/graph/data viz" and the `data-viz-canada-ca`
+skill is loaded automatically to produce accessible WET/Infobase-style charts (only when your
+message calls for it, to keep prompts lean).
+
+> New dependency: **axe-core**. Run `npm install` after pulling these changes.

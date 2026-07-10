@@ -59,3 +59,13 @@ export interface FeedbackResult {
   /** Human-readable note if the CSV was missing or unusable. */
   note?: string;
 }
+
+/** One prioritized fix in the action backlog. */
+export interface Action {
+  title: string;
+  severity: "high" | "medium" | "low";
+  effort: "small" | "medium" | "large";
+  sources: string[];
+  rationale: string;
+  fix: string;
+}

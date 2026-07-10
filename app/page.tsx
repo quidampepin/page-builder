@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import PageDetail from "@/components/PageDetail";
 import ThemeToggle from "@/components/ThemeToggle";
-import type { CrawlResult, FeedbackResult, Lang, PageContent } from "@/lib/types";
+import type { Action, CrawlResult, FeedbackResult, Lang, PageContent } from "@/lib/types";
 import {
   seededBuilderState,
   initialBuilderState,
@@ -32,6 +32,18 @@ export interface PageState {
   loadingHeuristics?: boolean;
   reportSummary?: string;
   loadingReport?: boolean;
+  seo?: string;
+  loadingSeo?: boolean;
+  doormats?: string;
+  loadingDoormats?: boolean;
+  accessibility?: string;
+  loadingAccessibility?: boolean;
+  readability?: string;
+  linkCheck?: string;
+  loadingLinks?: boolean;
+  actions?: Action[];
+  loadingActions?: boolean;
+  actionsChecked?: Record<number, boolean>;
   builder?: { state: BuilderAppState; history: BuilderHistory };
   error?: string;
 }

@@ -211,3 +211,93 @@ ${writer}
 
 ${mapping}`;
 }
+
+/** SEO / findability — canada-ca-seo, cross-referenced with analytics search terms. */
+export function seoPrompt(lang: Lang): string {
+  const skill = readSharedSkill("canada-ca-seo");
+  return `You are improving the findability of a Canada.ca page. Using the skill below, produce
+concrete SEO assets and review. When analytics (especially internal search terms) or feedback are
+provided, ground your keywords and gaps in them — e.g. if users search for a term the page never
+uses, call that out.
+
+Output this Markdown structure:
+
+## Findability read
+2–3 sentences: how findable this page likely is and the biggest gap.
+
+## Recommended metadata
+- **Title tag** (≤ 60 chars)
+- **Meta description** (≤ 160 chars)
+- **Keywords** users actually use (tie to search terms when provided)
+
+## Structured data
+A \`\`\`json code block with appropriate schema.org JSON-LD for this page type.
+
+## Gaps & fixes
+3–5 bullets of specific findability fixes (missing terms, unclear title, thin content on a
+searched topic, etc.).
+
+Return Markdown only, no preamble. ${langLine(lang)}
+
+---
+
+${skill}`;
+}
+
+/** Doormats — canada-ca-doormat, grounded in what users look for. */
+export function doormatsPrompt(lang: Lang): string {
+  const skill = readSharedSkill("canada-ca-doormat");
+  return `You are reviewing and improving the doormats (linked headings + short descriptions used to
+guide users to subtopics) on a Canada.ca topic/landing page. Follow the skill below.
+
+If the page already has doormats, evaluate them and propose improved versions. If it doesn't (or is
+a content page), propose the doormats it SHOULD have based on its content, and — when provided — the
+feedback themes and analytics search terms (users are telling you what they came for).
+
+Output this Markdown structure:
+
+## Assessment
+2–3 sentences on the current doormats (or the need for them).
+
+## Proposed doormats
+A Markdown table: | Link title | Description | Why (evidence) |
+Keep link titles task-focused and descriptions to one short sentence each, per the skill.
+
+## Notes
+Any ordering, grouping, or wording guidance.
+
+Return Markdown only, no preamble. ${langLine(lang)}
+
+---
+
+${skill}`;
+}
+
+/**
+ * Actions backlog — synthesize ALL gathered evidence into a STRICT JSON list of
+ * prioritized, concrete fixes. Parsed by the route; no prose.
+ */
+export function actionsPrompt(lang: Lang): string {
+  return `You turn a Canada.ca page's UX evidence into a prioritized, de-duplicated action backlog.
+You are given any subset of: user-feedback analysis, analytics assessment, user tasks, heuristic
+evaluation, SEO review, doormat review, accessibility findings, readability metrics.
+
+Merge overlapping issues from different sources into single actions. Output STRICT JSON ONLY — no
+markdown fences, no preamble — matching exactly:
+
+{
+  "actions": [
+    {
+      "title": "Imperative, specific action (e.g. 'Move eligibility criteria above the fold')",
+      "severity": "high" | "medium" | "low",
+      "effort": "small" | "medium" | "large",
+      "sources": ["feedback" | "analytics" | "tasks" | "heuristics" | "seo" | "doormats" | "accessibility" | "readability"],
+      "rationale": "One sentence tying it to the evidence.",
+      "fix": "A concrete instruction the page editor can apply."
+    }
+  ]
+}
+
+Rules: 8–15 actions max, highest impact first. Only include actions grounded in the evidence; never
+invent facts, programs, dates, or figures. Keep titles short. ${lang === "fr" ? "Write the text fields in French." : "Write the text fields in English."}`;
+}
