@@ -29,7 +29,6 @@ function toMarkdown(v: AxeViolation[]): string {
 
 /** Minimal shape of the axe object we use. */
 interface AxeLike {
-  source: string;
   run: (ctx: Document, opts: unknown) => Promise<{ violations: AxeViolation[] }>;
 }
 
@@ -59,17 +58,23 @@ export default function AccessibilityCard({
       // Let external CSS (GCWeb theme) load so colour-contrast is meaningful.
       await new Promise((r) => setTimeout(r, 500));
 
-      // axe validates context with `instanceof Document`, which fails across
-      // realms — so run axe INSIDE the iframe. axe-core exposes `.source`, a
-      // self-contained script string meant exactly for injecting into frames.
+      // axe validates its context with `instanceof Document`, which fails across
+      // realms — so axe must run INSIDE the iframe. Load it into the frame from
+      // a CDN (same place the preview already loads the GCWeb theme) and wait
+      // for it before running.
       if (!win.axe) {
-        const mod = await import("axe-core");
-        const source = (mod as unknown as { default: { source: string } }).default.source;
-        const script = doc.createElement("script");
-        script.textContent = source;
-        (doc.head || doc.documentElement).appendChild(script);
+        await new Promise<void>((resolve, reject) => {
+          const sc = doc.createElement("script");
+          sc.src = "https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js";
+          sc.crossOrigin = "anonymous";
+          sc.onload = () => resolve();
+          sc.onerror = () => reject(new Error("Could not load axe-core from the CDN (network blocked?)."));
+          (doc.head || doc.documentElement).appendChild(sc);
+        });
+        // Give the just-evaluated library a tick to attach to the frame window.
+        await new Promise((r) => setTimeout(r, 50));
       }
-      if (!win.axe) throw new Error("axe-core failed to load into the preview frame.");
+      if (!win.axe) throw new Error("axe-core loaded but did not attach to the preview frame.");
 
       const res = await win.axe.run(doc, {
         runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] },

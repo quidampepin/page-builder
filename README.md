@@ -93,4 +93,5 @@ optional **section IA recommendation** (merge/split/reorder).
 skill is loaded automatically to produce accessible WET/Infobase-style charts (only when your
 message calls for it, to keep prompts lean).
 
-> New dependency: **axe-core**. Run `npm install` after pulling these changes.
+> The accessibility check loads **axe-core** from a CDN (jsDelivr) into the preview frame at
+> runtime — no extra npm dependency needed.
