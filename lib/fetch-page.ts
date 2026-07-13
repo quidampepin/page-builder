@@ -24,9 +24,13 @@ export function normalizeUrl(raw: string): string {
   try {
     const u = new URL(raw);
     u.hash = "";
-    // Drop tracking-ish query params but keep meaningful ones untouched —
-    // for Canada.ca content pages query strings are rare, so just clear the
-    // hash and normalize a trailing slash on the path.
+    u.hostname = u.hostname.toLowerCase();
+    // Drop tracking/query noise so the same page linked with different
+    // campaign params doesn't show up as several nodes.
+    const TRACK = /^(utm_|mc_|_ga|gclid|fbclid|mkt_tok|cmpid|wbdisable$|ga$|cid$|src$|source$|ref$|referrer$)/i;
+    for (const k of [...u.searchParams.keys()]) {
+      if (TRACK.test(k)) u.searchParams.delete(k);
+    }
     let path = u.pathname;
     if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
     u.pathname = path;
@@ -44,6 +48,22 @@ export interface FetchedPage {
   content: string;
   /** Absolute, same-host links found inside <main>. */
   links: string[];
+}
+
+/**
+ * Resolve a possibly-relative URL against the page it was found on. Leaves
+ * data:, mailto:, tel:, javascript:, and pure #fragments untouched; returns
+ * "" for empty input.
+ */
+function toAbsolute(val: string | undefined, pageUrl: string): string {
+  if (!val) return "";
+  const v = val.trim();
+  if (!v || v.startsWith("#") || /^(data:|mailto:|tel:|javascript:)/i.test(v)) return v;
+  try {
+    return new URL(v, pageUrl).href;
+  } catch {
+    return v;
+  }
 }
 
 const UA =
@@ -105,13 +125,8 @@ export async function fetchPage(url: string): Promise<FetchedPage> {
   const links: string[] = [];
   const $mainForLinks = $("main").first();
   $mainForLinks.find("a[href]").each((_, el) => {
-    let href = $(el).attr("href") || "";
-    if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) {
-      return;
-    }
-    if (href.startsWith("/")) href = origin + href;
-    if (!/^https?:\/\//i.test(href)) return;
-    links.push(href);
+    const abs = toAbsolute($(el).attr("href") || "", url);
+    if (abs && /^https?:\/\//i.test(abs)) links.push(abs);
   });
 
   // Now strip noise for the preview/content copy.
@@ -122,11 +137,30 @@ export async function fetchPage(url: string): Promise<FetchedPage> {
       if (this.type === "comment") $(this).remove();
     });
 
-  const resolveAttrs = ["href", "src", "data-src", "data-incl-name"];
-  $("a, img, source, iframe, link").each((_, el) => {
+  // Resolve every asset/link reference to an absolute URL against the SOURCE
+  // page URL (not just the origin) so images and links using page-relative
+  // paths (e.g. "images/x.jpg", "../y.png") keep working in the iframe.
+  const resolveAttrs = ["href", "src", "data-src", "data-incl-name", "poster"];
+  $("a, img, source, iframe, link, video, audio").each((_, el) => {
     for (const attr of resolveAttrs) {
       const val = $(el).attr(attr);
-      if (val && val.startsWith("/")) $(el).attr(attr, origin + val);
+      const abs = toAbsolute(val, url);
+      if (abs && abs !== val) $(el).attr(attr, abs);
+    }
+    // Responsive images: resolve each candidate in srcset.
+    const srcset = $(el).attr("srcset");
+    if (srcset) {
+      const fixed = srcset
+        .split(",")
+        .map((part) => {
+          const seg = part.trim();
+          if (!seg) return seg;
+          const sp = seg.split(/\s+/);
+          const abs = toAbsolute(sp[0], url);
+          return abs ? [abs, ...sp.slice(1)].join(" ") : seg;
+        })
+        .join(", ");
+      $(el).attr("srcset", fixed);
     }
   });
 
@@ -136,12 +170,21 @@ export async function fetchPage(url: string): Promise<FetchedPage> {
   const $main = $("main").first();
   const main = $main.length ? ($.html($main) || "").trim() : "";
 
-  const h1 = $("h1#wb-cont, h1[property='name'], main h1").first().text().trim();
+  // Prefer the <title> tag: it's unique per page. Canada.ca subway/application
+  // pages repeat a program-level H1 across every step ("Visitor visa"), so the
+  // H1 doesn't distinguish them — but the <title> does. Strip the trailing
+  // " - Canada.ca" (or "– Canada.ca" / "| Canada.ca") site suffix.
   const docTitle = $("title")
     .text()
-    .replace(/\s*-\s*Canada\.ca\s*$/i, "")
+    .replace(/\s*[-–|]\s*Canada\.ca\s*$/i, "")
+    .replace(/\s+/g, " ")
     .trim();
-  const title = h1 || docTitle || url;
+  const h1 = $("h1#wb-cont, h1[property='name'], main h1")
+    .first()
+    .text()
+    .replace(/\s+/g, " ")
+    .trim();
+  const title = docTitle || h1 || url;
 
   return {
     url,

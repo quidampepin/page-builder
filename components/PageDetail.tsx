@@ -172,7 +172,7 @@ export default function PageDetail({
             <SectionPanel crawl={crawl} lang={lang} feedbackThemes={state.feedbackAnalysis} />
           )}
           {tab === "report" && (
-            <ReportPanel lang={lang} title={activeTitle} url={activeUrl} state={state} patch={patch} />
+            <ReportPanel lang={lang} title={activeTitle} url={activeUrl} content={activeContent} state={state} patch={patch} />
           )}
         </div>
       )}

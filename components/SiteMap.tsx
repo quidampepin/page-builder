@@ -11,17 +11,41 @@ interface Laid {
   y: number;
 }
 
-const COL_W = 230;
-const ROW_H = 34;
-const BOX_W = 190;
-const BOX_H = 24;
+const COL_W = 290;
+const ROW_H = 50;
+const BOX_W = 236;
 const PAD = 20;
+const LINE_MAX = 36; // approx chars per line at this width/font
 
-/**
- * On-demand visual map of the crawled node and its children. A simple tidy
- * layout: x = depth, y assigned so leaves stack and parents center on their
- * children. Click a node to select it. Exportable as SVG or PNG.
- */
+/** Greedy word-wrap to at most 2 lines, with an ellipsis if it overflows. */
+function wrapLabel(text: string): string[] {
+  const words = text.replace(/\s+/g, " ").trim().split(" ");
+  const lines: string[] = [];
+  let cur = "";
+  for (let i = 0; i < words.length; i++) {
+    let w = words[i];
+    if (w.length > LINE_MAX) w = w.slice(0, LINE_MAX - 1) + "…";
+    if (!cur) cur = w;
+    else if ((cur + " " + w).length <= LINE_MAX) cur += " " + w;
+    else {
+      lines.push(cur);
+      cur = w;
+      if (lines.length === 1) {
+        // second line: fit the rest, ellipsize if more remains
+        const rest = [cur, ...words.slice(i + 1)].join(" ");
+        lines.push(rest.length > LINE_MAX ? rest.slice(0, LINE_MAX - 1) + "…" : rest);
+        return lines;
+      }
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines.slice(0, 2);
+}
+
+function boxHeight(node: PageNode): number {
+  return wrapLabel(nodeLabel(node)).length >= 2 ? 42 : 26;
+}
+
 export default function SiteMap({
   root,
   nodes,
@@ -81,6 +105,7 @@ export default function SiteMap({
 
   const px = (l: Laid) => PAD + l.x * COL_W;
   const py = (l: Laid) => PAD + l.y * ROW_H;
+  const cy = (l: Laid) => py(l) + boxHeight(l.node) / 2;
 
   function serializeSvg(): string {
     const el = svgRef.current;
@@ -89,7 +114,6 @@ export default function SiteMap({
     clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     clone.setAttribute("width", String(width));
     clone.setAttribute("height", String(height));
-    // white background so exported image isn't transparent
     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     rect.setAttribute("width", String(width));
     rect.setAttribute("height", String(height));
@@ -129,61 +153,48 @@ export default function SiteMap({
   }
 
   return (
-    <div className="relative h-full w-full overflow-auto bg-slate-50">
-      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-slate-200 bg-white/90 px-3 py-2 backdrop-blur">
-        <span className="text-xs font-medium text-slate-500">Site map</span>
+    <div className="relative h-full w-full overflow-auto bg-slate-50 dark:bg-slate-950">
+      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-slate-200 bg-white/90 px-3 py-2 backdrop-blur dark:border-slate-700 dark:bg-slate-900/90">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Site map</span>
         <div className="flex-1" />
-        <button
-          onClick={downloadSvg}
-          className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
-        >
-          Download SVG
-        </button>
-        <button
-          onClick={downloadPng}
-          className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
-        >
-          Download PNG
-        </button>
+        <button onClick={downloadSvg} className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Download SVG</button>
+        <button onClick={downloadPng} className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Download PNG</button>
       </div>
       <svg ref={svgRef} width={width} height={height} className="block">
         {edges.map((e, i) => {
           const x1 = px(e.from) + BOX_W;
-          const y1 = py(e.from) + BOX_H / 2;
+          const y1 = cy(e.from);
           const x2 = px(e.to);
-          const y2 = py(e.to) + BOX_H / 2;
+          const y2 = cy(e.to);
           const mx = (x1 + x2) / 2;
-          return (
-            <path
-              key={i}
-              d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`}
-              fill="none"
-              stroke="#cbd5e1"
-              strokeWidth={1.5}
-            />
-          );
+          return <path key={i} d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`} fill="none" stroke="#cbd5e1" strokeWidth={1.5} />;
         })}
         {laid.map((l) => {
           const isSel = selected === l.node.url;
           const isErr = !!l.node.error;
+          const lines = wrapLabel(nodeLabel(l.node));
+          const h = lines.length >= 2 ? 42 : 26;
           return (
-            <g
-              key={l.node.url}
-              transform={`translate(${px(l)}, ${py(l)})`}
-              className="cursor-pointer"
-              onClick={() => onSelect(l.node.url)}
-            >
+            <g key={l.node.url} transform={`translate(${px(l)}, ${py(l)})`} className="cursor-pointer" onClick={() => onSelect(l.node.url)}>
+              <title>{`${nodeLabel(l.node)}\n${l.node.url}`}</title>
               <rect
                 width={BOX_W}
-                height={BOX_H}
+                height={h}
                 rx={4}
                 fill={isSel ? "#1d4ed8" : isErr ? "#fee2e2" : "#ffffff"}
                 stroke={isSel ? "#1d4ed8" : isErr ? "#ef4444" : "#cbd5e1"}
                 strokeWidth={1.5}
               />
-              <text x={8} y={BOX_H / 2 + 4} fontSize={11} fill={isSel ? "#ffffff" : "#0f172a"}>
-                {nodeLabel(l.node).slice(0, 30)}
-              </text>
+              {lines.length >= 2 ? (
+                <text x={9} y={17} fontSize={11.5} fill={isSel ? "#ffffff" : "#0f172a"}>
+                  <tspan x={9} dy={0}>{lines[0]}</tspan>
+                  <tspan x={9} dy={15}>{lines[1]}</tspan>
+                </text>
+              ) : (
+                <text x={9} y={h / 2 + 4} fontSize={11.5} fill={isSel ? "#ffffff" : "#0f172a"}>
+                  {lines[0]}
+                </text>
+              )}
             </g>
           );
         })}

@@ -2,79 +2,81 @@
 
 import { useMemo, useState } from "react";
 import { Btn, Spinner } from "./ui";
-import { buildReportHtml, printReport, type ReportSection } from "@/lib/report";
+import { buildProReport, printProReport, type PageReportData, type ReportInput } from "@/lib/report-pro";
+import { readability } from "@/lib/readability";
 import { downloadText, slugify } from "@/lib/download";
-import type { Lang } from "@/lib/types";
-
-interface Slice {
-  feedbackAnalysis?: string;
-  analytics?: string;
-  userTasks?: string;
-  heuristics?: string;
-  seo?: string;
-  doormats?: string;
-  accessibility?: string;
-  readability?: string;
-  linkCheck?: string;
-  reportSummary?: string;
-  loadingReport?: boolean;
-}
+import type { PageState } from "@/app/page";
+import type { Lang } from "@/lib/builder-types";
 
 export default function ReportPanel({
   lang,
   title,
   url,
+  content,
   state,
   patch,
 }: {
   lang: Lang;
   title: string;
   url: string;
-  state: Slice;
-  patch: (p: Partial<Slice>) => void;
+  content: string;
+  state: PageState;
+  patch: (p: Partial<PageState>) => void;
 }) {
   const [error, setError] = useState<string | null>(null);
 
   const available = [
-    state.feedbackAnalysis && "feedback analysis",
+    state.feedbackAnalysis && "feedback",
     state.analytics && "analytics",
     state.userTasks && "user tasks",
     state.heuristics && "heuristics",
     state.seo && "SEO",
     state.doormats && "doormats",
     state.accessibility && "accessibility",
-    state.readability && "readability",
-    state.linkCheck && "link check",
+    content && "readability",
+    state.linkCheck && "links",
   ].filter(Boolean) as string[];
 
-  const sections = useMemo<ReportSection[]>(() => {
-    const s: ReportSection[] = [];
-    if (state.reportSummary) s.push({ heading: "Executive summary", markdown: state.reportSummary });
-    if (state.feedbackAnalysis) s.push({ heading: "User feedback analysis", markdown: state.feedbackAnalysis });
-    if (state.analytics) s.push({ heading: "Analytics assessment", markdown: state.analytics });
-    if (state.userTasks) s.push({ heading: "User tasks", markdown: state.userTasks });
-    if (state.heuristics) s.push({ heading: "Heuristic evaluation", markdown: state.heuristics });
-    if (state.seo) s.push({ heading: "SEO & findability", markdown: state.seo });
-    if (state.doormats) s.push({ heading: "Doormats", markdown: state.doormats });
-    if (state.accessibility) s.push({ heading: "Accessibility", markdown: state.accessibility });
-    if (state.readability) s.push({ heading: "Readability", markdown: state.readability });
-    if (state.linkCheck) s.push({ heading: "Link check", markdown: state.linkCheck });
-    return s;
-  }, [state.reportSummary, state.feedbackAnalysis, state.analytics, state.userTasks, state.heuristics, state.seo, state.doormats, state.accessibility, state.readability, state.linkCheck]);
+  const pageData = useMemo<PageReportData>(() => {
+    const brokenMatch = state.linkCheck?.match(/Broken \((\d+)\)/);
+    const sections = [
+      state.feedbackAnalysis && { heading: "User feedback analysis", markdown: state.feedbackAnalysis },
+      state.analytics && { heading: "Analytics assessment", markdown: state.analytics },
+      state.userTasks && { heading: "User tasks", markdown: state.userTasks },
+      state.heuristics && { heading: "Heuristic evaluation", markdown: state.heuristics },
+      state.seo && { heading: "SEO & findability", markdown: state.seo },
+      state.doormats && { heading: "Doormats", markdown: state.doormats },
+      state.linkCheck && { heading: "Link check", markdown: state.linkCheck },
+    ].filter(Boolean) as { heading: string; markdown: string }[];
 
-  const html = useMemo(
-    () =>
-      sections.length
-        ? buildReportHtml({
-            title: title || "Page",
-            url: url || undefined,
-            lang,
-            generatedAt: new Date().toLocaleString(),
-            sections,
-          })
-        : "",
-    [sections, title, url, lang],
-  );
+    return {
+      title: title || "Page",
+      url,
+      readability: content ? readability(content) : undefined,
+      beforeGrade: state.content?.content ? readability(state.content.content).gradeLevel : undefined,
+      a11y: state.a11yData,
+      feedbackCount: state.feedback?.matched.length,
+      feedbackQuotes: state.feedback?.matched.slice(0, 6).map((m) => m.comment),
+      brokenLinks: brokenMatch ? Number(brokenMatch[1]) : undefined,
+      actions: state.actions,
+      sections,
+    };
+  }, [title, url, content, state]);
+
+  const hasAnything = available.length > 0 || Boolean(content);
+
+  const html = useMemo<string>(() => {
+    if (!hasAnything) return "";
+    const input: ReportInput = {
+      title: title || "Page",
+      subtitle: url ? `Assessment of ${new URL(url, "https://x").pathname}` : undefined,
+      generatedAt: new Date().toLocaleString(),
+      lang,
+      execSummary: state.reportSummary,
+      pages: [pageData],
+    };
+    return buildProReport(input);
+  }, [pageData, title, url, lang, state.reportSummary, hasAnything]);
 
   const slug = slugify(title || "page");
 
@@ -95,7 +97,7 @@ export default function ReportPanel({
           seo: state.seo,
           doormats: state.doormats,
           accessibility: state.accessibility,
-          readability: state.readability,
+          readability: content ? `Reading grade ${readability(content).gradeLevel}` : undefined,
           links: state.linkCheck,
           lang,
         }),
@@ -113,7 +115,7 @@ export default function ReportPanel({
     <div className="flex h-full flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm text-slate-600 dark:text-slate-300">
-          {available.length ? `Includes: ${available.join(", ")}.` : "No insights gathered yet — run Feedback, Analytics, User tasks, or Heuristics first."}
+          {available.length ? `Includes: ${available.join(", ")}.` : "Run assessments (Feedback, Analytics, Assess) to fill the report."}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -123,7 +125,7 @@ export default function ReportPanel({
         <Btn variant="ghost" onClick={() => html && downloadText(`${slug}-ux-report.html`, html, "text/html")} disabled={!html}>
           Download HTML
         </Btn>
-        <Btn variant="ghost" onClick={() => html && printReport(html)} disabled={!html}>
+        <Btn variant="ghost" onClick={() => html && printProReport(html)} disabled={!html}>
           Download PDF
         </Btn>
       </div>
@@ -135,6 +137,7 @@ export default function ReportPanel({
         <iframe
           title="report preview"
           className="min-h-0 w-full flex-1 rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700"
+          sandbox="allow-scripts allow-same-origin"
           srcDoc={html}
         />
       ) : (

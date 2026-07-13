@@ -198,7 +198,15 @@ export default function AssessPanel({
         <AccessibilityCard
           composed={activeComposed}
           result={state.accessibility}
-          onResult={(md) => patch({ accessibility: md })}
+          onResult={(md, v) => {
+            const c = { critical: 0, serious: 0, moderate: 0, minor: 0, total: 0 };
+            for (const x of v) {
+              const k = (x.impact || "minor") as keyof typeof c;
+              if (k in c) (c as Record<string, number>)[k] += 1;
+              c.total += 1;
+            }
+            patch({ accessibility: md, a11yData: c });
+          }}
         />
       </Row>
 

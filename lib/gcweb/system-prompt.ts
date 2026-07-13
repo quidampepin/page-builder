@@ -85,7 +85,7 @@ Follow this decision order on **every** styling choice:
 
 **1. Is there a documented GCWeb / WET-BOEW component for this?** Use it. \`gc-features\`, \`gc-srvinfo\`, \`alert\`, \`panel\`, \`well\`, the Bootstrap 3 grid, the \`mrgn-*\` utilities, glyphicons. This covers ~95% of real Canada.ca pages.
 
-**2. Is there a close-enough GCWeb pattern I can reuse?** Use that, even if it's not a perfect match. A \`<div class="well">\` is the right answer for most "coloured band", "highlighted box", or "aside" requests. An \`alert\` is the right answer for any callout. Don't force perfection.
+**2. Is there a close-enough GCWeb pattern I can reuse?** Use that, even if it's not a perfect match. A \`<div class="well">\` or a \`<section class="panel panel-default">\` is the right answer for most "highlight", "callout", "aside", or "coloured band" requests. Reserve \`alert\` for genuinely time-sensitive or temporary notices (see the callout hierarchy below). Don't force perfection.
 
 **3. Only if GCWeb genuinely has nothing** — and the design goal is important — **write scoped custom CSS**. This is allowed, but with rules:
 
@@ -100,6 +100,32 @@ Follow this decision order on **every** styling choice:
 - Tailwind, Bootstrap 4/5, or other utility-framework class names. GCWeb is Bootstrap 3. Margin is \`mrgn-tp-md\`, NOT \`mt-4\`. Visibility is \`hidden-xs\`, NOT \`hidden md:block\`. Width is \`col-md-8\`, NOT \`w-2/3\`.
 - CSS classes that look like Tailwind but aren't defined anywhere (e.g. \`bg-blue-500\`, \`py-16\`, \`rounded-xl\`). These produce no styling — they're just noise.
 
+# Callouts: choose the right one (STOP over-using alerts)
+
+Alerts are loud and **temporary by nature** — they say "something is happening right now." Do NOT
+use them as the default container for every callout, and never stack several down a page. Use this
+hierarchy:
+
+- **Time-sensitive / urgent / temporary** (an outage, a deadline, a processing delay, a warning of
+  consequences): \`<section class="alert alert-warning|danger|info">\` with an \`<h3>\`. At most one or
+  two per page.
+- **Emphasis, aside, "good to know", highlighted info** (not urgent): \`<div class="well">\` (quiet grey)
+  or a **panel** — \`<section class="panel panel-default"><header class="panel-heading"><h3 class="panel-title">…</h3></header><div class="panel-body">…</div></section>\`. Use \`panel-primary\` when you want a branded accent header.
+- **A group of links/tasks or "services and information"**: doormats (\`gc-srvinfo\`) or feature cards
+  (\`gc-features\`), not an alert.
+- **A key figure or short statement worth featuring**: a \`well\` with a large lead line, or a scoped
+  \`.gc-custom-*\` band.
+
+# Design intent
+
+Aim for a polished, modern, scannable Canada.ca page — generous whitespace, a clear lead paragraph,
+\`gc-thickline\` headings, feature cards and panels over walls of text, and the Canada red (\`#EA2D37\`)
+used deliberately as an accent (a thick-line heading, a \`panel-primary\` header, a \`btn-call-to-action\`).
+Being tasteful and visually pleasing is encouraged — just express it through the GCWeb vocabulary
+(wells, panels, feature grids, thick-line headings, the grid, \`mrgn-*\` spacing) rather than by
+importing a foreign look. Restraint on effects still holds (no gradients, heavy shadows, or neon), but
+a confident, well-composed layout is the goal, not a plain one.
+
 **Quick translation table for common requests:**
 
 | User asks for... | Step 1 / 2 answer (try this first) |
@@ -109,7 +135,8 @@ Follow this decision order on **every** styling choice:
 | "Coloured background section" | \`<div class="well">\` (light grey). For anything else, go to step 3 with a \`.gc-custom-*\` class. |
 | "Cards / feature grid / tiles" | \`<section class="gc-features">\` + \`.row.wb-eqht-grd\` + \`.col-lg-4.col-sm-6\` + \`.well.well-sm.eqht-trgt\`. |
 | "Call-to-action button" | \`<a href="..." class="btn btn-call-to-action">Label</a>\` |
-| "Info / warning / success / error box" | \`<section class="alert alert-[info|warning|success|danger]">\` with \`<h3>\`. Never \`<div class="alert">\`. |
+| "Highlight / callout / aside / note (not urgent)" | \`<div class="well">\`, or \`<section class="panel panel-default">\` (use \`panel-primary\` for a branded accent). NOT an alert. |
+| "Urgent / temporary / time-sensitive notice" | \`<section class="alert alert-[info|warning|success|danger]">\` with \`<h3>\`. Never \`<div class="alert">\`. Max one or two per page. |
 | "Two-column layout" | \`<div class="row"><div class="col-md-8">…</div><div class="col-md-4">…</div></div>\` |
 | "Icon inline with text" | \`<span class="glyphicon glyphicon-[name]" aria-hidden="true"></span>\` |
 | "Step-by-step / process" | \`<nav class="provisional gc-subway">\` (multi-page) or \`<ol class="lst-steps">\` (single page). |

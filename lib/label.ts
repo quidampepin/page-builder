@@ -12,15 +12,11 @@
  */
 export function nodeLabel(node: { url: string; title: string }): string {
   if (node.title && node.title !== node.url) return node.title;
+  // No fetched title (page cut by the cap / crawl edge): show the honest URL
+  // path rather than a fabricated title.
   try {
-    const segs = new URL(node.url).pathname.split("/").filter(Boolean);
-    let last = segs[segs.length - 1] || "";
-    last = last
-      .replace(/\.(html?|php|aspx?)$/i, "")
-      .replace(/[-_]+/g, " ")
-      .trim();
-    if (!last) return node.url;
-    return last.charAt(0).toUpperCase() + last.slice(1);
+    const u = new URL(node.url);
+    return u.pathname === "/" ? node.url : u.pathname;
   } catch {
     return node.url;
   }

@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import PageDetail from "@/components/PageDetail";
+import AutoMode from "@/components/AutoMode";
 import ThemeToggle from "@/components/ThemeToggle";
 import type { Action, CrawlResult, FeedbackResult, Lang, PageContent } from "@/lib/types";
 import {
@@ -37,6 +38,7 @@ export interface PageState {
   doormats?: string;
   loadingDoormats?: boolean;
   accessibility?: string;
+  a11yData?: { critical: number; serious: number; moderate: number; minor: number; total: number };
   loadingAccessibility?: boolean;
   readability?: string;
   linkCheck?: string;
@@ -66,6 +68,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [pages, setPages] = useState<Record<string, PageState>>({});
+  const [mode, setMode] = useState<"manual" | "auto">("manual");
 
   const patch = useCallback((key: string, p: Partial<PageState>) => {
     setPages((prev) => ({ ...prev, [key]: { ...prev[key], ...p } }));
@@ -181,6 +184,21 @@ export default function Home() {
           </span>
           <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">UX tool</div>
         </div>
+        <div className="ml-2 flex overflow-hidden rounded-md border border-slate-300 text-sm dark:border-slate-700">
+          {(["manual", "auto"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`px-3 py-1.5 ${
+                mode === m
+                  ? "bg-canada text-white"
+                  : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300"
+              }`}
+            >
+              {m === "manual" ? "Manual" : "Auto"}
+            </button>
+          ))}
+        </div>
         <div className="flex-1" />
         <div className="flex overflow-hidden rounded-md border border-slate-300 text-sm dark:border-slate-700">
           {(["en", "fr"] as Lang[]).map((l) => (
@@ -210,22 +228,26 @@ export default function Home() {
       )}
 
       <div className="min-h-0 flex-1">
-        <PageDetail
-          crawl={crawl}
-          crawling={crawling}
-          onCrawl={runCrawl}
-          onStartBlank={startBlank}
-          selectedKey={activeKey}
-          onSelect={selectNode}
-          node={selectedNode}
-          state={activeState}
-          patch={patchActive}
-          lang={lang}
-          builderState={activeState.builder?.state}
-          builderHistory={activeState.builder?.history}
-          onBuilderStateChange={setBuilderState}
-          onBuilderHistoryChange={setBuilderHistory}
-        />
+        {mode === "auto" ? (
+          <AutoMode lang={lang} />
+        ) : (
+          <PageDetail
+            crawl={crawl}
+            crawling={crawling}
+            onCrawl={runCrawl}
+            onStartBlank={startBlank}
+            selectedKey={activeKey}
+            onSelect={selectNode}
+            node={selectedNode}
+            state={activeState}
+            patch={patchActive}
+            lang={lang}
+            builderState={activeState.builder?.state}
+            builderHistory={activeState.builder?.history}
+            onBuilderStateChange={setBuilderState}
+            onBuilderHistoryChange={setBuilderHistory}
+          />
+        )}
       </div>
     </div>
   );

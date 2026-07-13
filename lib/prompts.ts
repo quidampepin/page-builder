@@ -177,6 +177,12 @@ the page's real purpose and factual content.
   new programs, dates, dollar figures, or policies. If information is missing, keep the
   existing wording rather than fabricating.
 - Follow the Canada.ca Content Style Guide and plain-language rules from the skills below.
+- **Callouts:** don't lean on alerts. Reserve \`alert\` for genuinely time-sensitive/temporary notices
+  (max one or two). For highlights, asides, and "good to know" info use a \`well\` or a \`panel\`
+  (\`panel-primary\` for a branded accent); for groups of links use doormats or feature cards.
+- **Design intent:** aim for a polished, scannable, visually pleasing page within the GCWeb vocabulary
+  — generous whitespace, a clear lead, \`gc-thickline\` headings, panels/feature cards over walls of
+  text, and the Canada red used deliberately as an accent. Confident and well-composed, not plain.
 - ${langDirective}
 
 # Output contract (STRICT)
@@ -300,4 +306,31 @@ markdown fences, no preamble — matching exactly:
 
 Rules: 8–15 actions max, highest impact first. Only include actions grounded in the evidence; never
 invent facts, programs, dates, or figures. Keep titles short. ${lang === "fr" ? "Write the text fields in French." : "Write the text fields in English."}`;
+}
+
+/**
+ * Report narrative — synthesizes the story a polished report tells:
+ * pain points revealed, an executive summary, and what to watch next. The
+ * concrete "what we did" and the before/after scores are built deterministically
+ * from structured data, so this only produces the prose blocks.
+ */
+export function reportNarrativePrompt(lang: Lang): string {
+  return `You are writing the prose for a Government of Canada UX assessment report, for a mixed
+audience (content owners, managers). You are given, per page: the evidence gathered (user feedback,
+analytics, heuristics, SEO, doormats), the concrete improvements that were applied, and the
+before/after objective scores (reading grade, accessibility issue count).
+
+Return STRICT JSON only — no markdown fences, no preamble — matching exactly:
+
+{
+  "execSummary": "2–4 sentence executive summary in Markdown.",
+  "painPoints": "Markdown: the user pain points the assessment revealed. Lead with the sharpest,
+     evidence-backed ones. Use short bold labels + a sentence each. Ground every point in the
+     evidence provided; never invent numbers or problems.",
+  "nextSteps": "Markdown: what to look for next — concrete follow-ups once the changes are live
+     (e.g. monitor a specific metric or search term, re-check a page, a related page/flow to tackle
+     next, something that needs usability testing). 3–6 forward-looking bullets."
+}
+
+Be specific, balanced, and honest. Only use what the evidence supports. ${lang === "fr" ? "Write all text in French." : "Write all text in English."}`;
 }

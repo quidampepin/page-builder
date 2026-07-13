@@ -95,3 +95,32 @@ message calls for it, to keep prompts lean).
 
 > The accessibility check loads **axe-core** from a CDN (jsDelivr) into the preview frame at
 > runtime — no extra npm dependency needed.
+
+## Manual and Automatic modes
+
+A toggle in the top bar switches between two modes.
+
+- **Manual** — the full workspace: crawl or start blank, run any assessment, work the
+  Actions backlog, build/rewrite pages, and generate a report. Freeform.
+- **Automatic** — a batch pipeline. Paste 1–10 Canada.ca URLs, optionally attach a
+  feedback CSV and an analytics CSV, and tick which assessments to run. It:
+  1. **Assesses** every page (readability, static accessibility, links, plus the ticked
+     Opus assessments — feedback, analytics, user tasks, heuristics, SEO, doormats) and
+     synthesizes a per‑page action list;
+  2. **Pauses** at a review board where you accept/reject each proposed action;
+  3. **Applies** the approved fixes (rewrites each page) and generates the final report.
+
+The run is held in the browser: it **autosaves to localStorage** (survives reload) and can
+be **exported/imported as a `.uxrun.json`** file. Nothing is written server‑side, so Auto
+mode works identically on local and on Vercel — the reports and run files are browser
+downloads, not server storage. (If you later want fire‑and‑forget over large batches or
+multiple reviewers, the drop‑in is Vercel KV / Upstash; the current design doesn't need it.)
+
+## Polished reports
+
+Reports are self‑contained HTML in an editorial "data‑story" style: Inter, a Canada‑navy
+palette with a colourblind‑safe (Okabe‑Ito) accent set, **Chart.js** visuals driven by the
+real metrics (reading grade, accessibility issues, actions by severity, feedback volume),
+KPI stat cards, narrative headings, recommendation cards, and verbatim‑quote cards. One file,
+Chart.js from a CDN — **Download HTML** or **Download PDF** (print pipeline). Works for a
+single page (Manual → Report tab) or a whole batch (Auto mode).

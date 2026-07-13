@@ -19,7 +19,7 @@ export default function TreeView({
         <li key={node.url}>
           <button
             onClick={() => onSelect(node.url)}
-            title={node.url}
+            title={node.title && node.title !== node.url ? `${node.title}\n${node.url}` : node.url}
             className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-slate-100 ${
               selected === node.url ? "bg-slate-200 font-medium" : ""
             }`}

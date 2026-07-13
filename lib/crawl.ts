@@ -184,6 +184,22 @@ export async function crawl(opts: CrawlOptions): Promise<CrawlResult> {
   const rootNode = nodes.get(root);
   if (rootNode) rootNode.parentUrl = null;
 
+  // Title backfill: nodes cut by the page cap (or the crawl edge) were only
+  // ever registered by URL, so they'd show as a URL in the IA. Fetch their real
+  // <h1>/title, bounded so a huge section can't explode the request count.
+  const titleless = [...nodes.values()].filter((n) => !n.error && n.title === n.url);
+  const BACKFILL_BUDGET = 60;
+  if (titleless.length > 0) {
+    await mapLimit(titleless.slice(0, BACKFILL_BUDGET), concurrency, async (n) => {
+      try {
+        const page = await fetchPage(n.url);
+        n.title = page.title;
+      } catch {
+        /* leave the URL as the label */
+      }
+    });
+  }
+
   const ordered = orderNodes(root, nodes);
   const truncated = frontier.length > 0 && nodes.size >= maxPages;
 
